@@ -449,8 +449,45 @@ class NetworkSNRepository(
             }
 
             // --- OPTIONAL STEP 5: SOAP FALLBACK ---
-            // Removed redundant fallback logic to avoid code duplication.
-            // Use getKardex(), getCarga(), getCalifUnidades() explicitly if needed.
+            // If scraping failed (lists are empty), try to fetch data using SOAP methods
+            if (kardexList.isEmpty()) {
+                Log.e("SNRepository", ">>> Fallback: Fetching Kardex via SOAP <<<")
+                try {
+                    val kData = getKardex(matricula)
+                    if (kData.isNotEmpty()) {
+                        kardexList.addAll(kData)
+                        Log.e("SNRepository", "✅ Fallback Kardex OK: ${kardexList.size}")
+                    }
+                } catch (e: Exception) {
+                    Log.e("SNRepository", "Fallback Kardex Failed: ${e.message}")
+                }
+            }
+
+            if (cargaList.isEmpty()) {
+                Log.e("SNRepository", ">>> Fallback: Fetching Carga via SOAP <<<")
+                try {
+                    val cData = getCarga(matricula)
+                    if (cData.isNotEmpty()) {
+                        cargaList.addAll(cData)
+                        Log.e("SNRepository", "✅ Fallback Carga OK: ${cargaList.size}")
+                    }
+                } catch (e: Exception) {
+                    Log.e("SNRepository", "Fallback Carga Failed: ${e.message}")
+                }
+            }
+
+            if (parcialesList.isEmpty()) {
+                Log.e("SNRepository", ">>> Fallback: Fetching Parciales via SOAP <<<")
+                try {
+                    val pData = getCalifUnidades(matricula)
+                    if (pData.isNotEmpty()) {
+                        parcialesList.addAll(pData)
+                        Log.e("SNRepository", "✅ Fallback Parciales OK: ${parcialesList.size}")
+                    }
+                } catch (e: Exception) {
+                    Log.e("SNRepository", "Fallback Parciales Failed: ${e.message}")
+                }
+            }
 
 
         } catch (e: Exception) {
@@ -523,13 +560,17 @@ class NetworkSNRepository(
     }
 
     private fun extractResult(xml: String, tag: String): String? {
-        val startTag = "<$tag>"
-        val endTag = "</$tag>"
-        val startIndex = xml.indexOf(startTag)
-        val endIndex = xml.indexOf(endTag)
-        if (startIndex != -1 && endIndex != -1) {
-            val content = xml.substring(startIndex + startTag.length, endIndex)
-            return unescapeXml(content)
+        try {
+            // Regex to match <tag ...>content</tag> or <tag>content</tag>
+            // Handles potential namespaces or attributes
+            val regex = Regex("<$tag.*?>(.*?)</$tag>", RegexOption.DOT_MATCHES_ALL)
+            val match = regex.find(xml)
+            if (match != null) {
+                val content = match.groupValues[1]
+                return unescapeXml(content)
+            }
+        } catch (e: Exception) {
+            Log.e("SNRepository", "Error extracting result for tag $tag", e)
         }
         return null
     }
