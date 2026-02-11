@@ -1,0 +1,26 @@
+==============================REQUEST=========================================
+POST /ws/wsalumnos.asmx HTTP/1.1
+Host: sicenet.surguanajuato.tecnm.mx
+Content-Type: text/xml; charset=utf-8
+Content-Length: length
+SOAPAction: "http://tempuri.org/getCalifUnidadesByAlumno"
+
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <getCalifUnidadesByAlumno xmlns="http://tempuri.org/" />
+  </soap:Body>
+</soap:Envelope>
+
+
+==============================RESPONSE=========================================
+HTTP/1.1 200 OK
+Content-Type: text/xml; charset=utf-8
+Content-Length: length
+
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <getCalifUnidadesByAlumnoResponse xmlns="http://tempuri.org/">
+      <getCalifUnidadesByAlumnoResult>string</getCalifUnidadesByAlumnoResult>
+    </getCalifUnidadesByAlumnoResponse>
+  </soap:Body>
+</soap:Envelope>
