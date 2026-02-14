@@ -1,5 +1,8 @@
 package com.example.marsphotos.ui.screens
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,22 +12,27 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.work.Data
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import com.example.marsphotos.MarsPhotosApplication
 import com.example.marsphotos.data.local.LocalRepository
 import com.example.marsphotos.data.SNRepository
 import com.example.marsphotos.model.ProfileStudent
+import com.example.marsphotos.workers.FetchWorker
+import com.example.marsphotos.workers.StoreWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import retrofit2.HttpException
-import java.io.IOException
 
 /**
  * UI state para la pantalla de Perfil
  */
 sealed interface ProfileUiState {
     object Loading : ProfileUiState
-    data class Success(val profile: ProfileStudent) : ProfileUiState
+    data class Success(val profile: ProfileStudent, val lastUpdate: Long = 0) : ProfileUiState
     data class Error(val message: String) : ProfileUiState
 }
 
@@ -33,44 +41,81 @@ sealed interface ProfileUiState {
  */
 class ProfileViewModel(
     private val snRepository: SNRepository,
-    private val localRepository: LocalRepository
+    private val localRepository: LocalRepository,
+    private val application: MarsPhotosApplication
 ) : ViewModel() {
     
+    private val workManager = WorkManager.getInstance(application)
+
     var profileUiState: ProfileUiState by mutableStateOf(ProfileUiState.Loading)
         private set
     
+    private fun isOnline(): Boolean {
+        val connectivityManager = application.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
+    private fun scheduleSync(matricula: String) {
+        val workName = "Sync_PROFILE"
+        
+        val fetchData = Data.Builder()
+            .putString("feature", "PROFILE")
+            .build()
+
+        val fetchRequest = OneTimeWorkRequestBuilder<FetchWorker>()
+            .setInputData(fetchData)
+            .build()
+
+        val storeRequest = OneTimeWorkRequestBuilder<StoreWorker>()
+            .build()
+
+        workManager.beginUniqueWork(workName, ExistingWorkPolicy.REPLACE, fetchRequest)
+            .then(storeRequest)
+            .enqueue()
+
+        viewModelScope.launch {
+            workManager.getWorkInfoByIdFlow(fetchRequest.id).collect { workInfo ->
+                if (workInfo != null) {
+                    when (workInfo.state) {
+                        WorkInfo.State.SUCCEEDED -> {
+                            loadProfileFromLocal(matricula)
+                        }
+                        WorkInfo.State.FAILED -> {
+                            android.util.Log.e("ProfileVM", "Sync failed for PROFILE")
+                            if (profileUiState is ProfileUiState.Loading) {
+                                profileUiState = ProfileUiState.Error("Error al sincronizar perfil")
+                            }
+                        }
+                        else -> {}
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Carga el perfil académico del estudiante
      */
     fun loadProfile(matricula: String) {
         viewModelScope.launch {
-            android.util.Log.d("ProfileVM", "Iniciando carga de perfil para $matricula")
             profileUiState = ProfileUiState.Loading
             
-            // 1. Try Network
-            var networkProfile: ProfileStudent? = null
-            try {
-                networkProfile = withContext(Dispatchers.IO) {
-                    android.util.Log.d("ProfileVM", "Llamando a snRepository.profile...")
-                    val result = snRepository.profile(matricula)
-                    android.util.Log.d("ProfileVM", "snRepository.profile retornó: $result")
-                    result
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("ProfileVM", "Error de red al cargar perfil", e)
+            // First load from local
+            loadProfileFromLocal(matricula)
+
+            // If online, trigger sync
+            if (isOnline() && matricula.isNotEmpty()) {
+                scheduleSync(matricula)
             }
+        }
+    }
 
-            if (networkProfile != null && networkProfile.matricula.isNotEmpty()) {
-                profileUiState = ProfileUiState.Success(networkProfile)
-                return@launch
-            }
-
-            // 2. Try Local
+    private suspend fun loadProfileFromLocal(matricula: String) {
+        withContext(Dispatchers.IO) {
             try {
-                val localStudent = withContext(Dispatchers.IO) {
-                    localRepository.getStudentSync(matricula)
-                }
-
+                val localStudent = localRepository.getStudentSync(matricula)
                 if (localStudent != null) {
                     val profile = ProfileStudent(
                         matricula = localStudent.matricula,
@@ -82,12 +127,11 @@ class ProfileViewModel(
                         fotoUrl = localStudent.fotoUrl,
                         operaciones = localStudent.operaciones
                     )
-                    profileUiState = ProfileUiState.Success(profile)
-                } else {
-                    profileUiState = ProfileUiState.Error("No se pudo cargar el perfil (ni local ni red)")
+                    profileUiState = ProfileUiState.Success(profile, localStudent.lastUpdate)
+                } else if (!isOnline()) {
+                    profileUiState = ProfileUiState.Error("Offline: No hay datos guardados")
                 }
             } catch (e: Exception) {
-                android.util.Log.e("ProfileVM", "Error local al cargar perfil", e)
                 profileUiState = ProfileUiState.Error("Error: ${e.message}")
             }
         }
@@ -102,7 +146,11 @@ class ProfileViewModel(
                 val application = (this[APPLICATION_KEY] as MarsPhotosApplication)
                 val snRepository = application.container.snRepository
                 val localRepository = application.container.localRepository
-                ProfileViewModel(snRepository = snRepository, localRepository = localRepository)
+                ProfileViewModel(
+                    snRepository = snRepository, 
+                    localRepository = localRepository,
+                    application = application
+                )
             }
         }
     }

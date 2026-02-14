@@ -100,9 +100,17 @@ data class AlumnoInfo(
     @param:Element(name = "Carrera", required = false)
     val carrera: String? = null,
     
+    @field:Element(name = "Especialidad", required = false)
+    @param:Element(name = "Especialidad", required = false)
+    val especialidad: String? = null,
+
     @field:Element(name = "Semestre", required = false)
     @param:Element(name = "Semestre", required = false)
     val semestre: String? = null,
+
+    @field:Element(name = "SemActual", required = false)
+    @param:Element(name = "SemActual", required = false)
+    val semActual: String? = null,
     
     @field:Element(name = "Promedio", required = false)
     @param:Element(name = "Promedio", required = false)
@@ -114,5 +122,21 @@ data class AlumnoInfo(
     
     @field:Element(name = "StatusMatricula", required = false)
     @param:Element(name = "StatusMatricula", required = false)
-    val statusMatricula: String? = null
+    val statusMatricula: String? = null,
+
+    @field:Element(name = "CdtosAcumulados", required = false)
+    @param:Element(name = "CdtosAcumulados", required = false)
+    val cdtosAcumulados: String? = null,
+
+    @field:Element(name = "CdtosActuales", required = false)
+    @param:Element(name = "CdtosActuales", required = false)
+    val cdtosActuales: String? = null,
+
+    @field:Element(name = "Inscrito", required = false)
+    @param:Element(name = "Inscrito", required = false)
+    val inscrito: String? = null,
+
+    @field:Element(name = "FechaReins", required = false)
+    @param:Element(name = "FechaReins", required = false)
+    val fechaReins: String? = null
 )

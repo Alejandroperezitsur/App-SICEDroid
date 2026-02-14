@@ -288,11 +288,19 @@ class NetworkSNRepository(
                             if (alu != null) {
                                 nombre = "${alu.nombre ?: ""} ${alu.apellidos ?: ""}".trim()
                                 carrera = alu.carrera ?: ""
-                                semestre = alu.semestre ?: ""
+                                especialidad = alu.especialidad ?: ""
+                                semestre = alu.semActual ?: alu.semestre ?: ""
                                 promedio = alu.promedio ?: ""
                                 estatusAlu = alu.estado ?: ""
+                                cdtAc = alu.cdtosAcumulados ?: "0"
+                                cdtAct = alu.cdtosActuales ?: "0"
+                                inscritoStr = alu.inscrito ?: "NO"
+                                fReins = alu.fechaReins ?: ""
+                                Log.e("SNRepository", "✅ Datos XML extraídos: $nombre, $carrera")
                             }
-                        } catch (e: Exception) {}
+                        } catch (e: Exception) {
+                            Log.e("SNRepository", "❌ Error parseando XML de Perfil: ${e.message}")
+                        }
                     }
                 }
             }
@@ -309,30 +317,49 @@ class NetworkSNRepository(
             val html = pResponse.string()
             val doc = Jsoup.parse(html)
             
-            // Perfil básico del HTML
-            if (nombre.isEmpty()) nombre = doc.selectFirst("#lblNombre, .nombre, td:contains(Alumno) + td, b:contains(Bienvenido) + text")?.text()?.trim() ?: ""
-            if (fotoUrl.isEmpty()) fotoUrl = doc.selectFirst("#imgAlumno, [src*=foto], [src*=Foto], .foto")?.absUrl("src") ?: ""
-            if (especialidad.isEmpty()) especialidad = doc.selectFirst("td:contains(Especialidad) + td, #lblEspecialidad")?.text()?.trim() ?: ""
-            if (semestre.isEmpty()) semestre = doc.selectFirst("td:contains(Sem. Actual) + td, #lblSemActual")?.text()?.trim() ?: ""
+            // Perfil básico del HTML (Usando IDs del HTML del usuario)
+            if (nombre.isEmpty()) nombre = doc.selectFirst("#spnNombre")?.text()?.trim() ?: doc.selectFirst("#lblNombre")?.text()?.trim() ?: ""
+            if (fotoUrl.isEmpty()) fotoUrl = doc.selectFirst("#imgFoto, #imgAlumno")?.absUrl("src") ?: ""
+            if (carrera.isEmpty()) carrera = doc.selectFirst("#spnCarrera")?.text()?.trim() ?: ""
+            if (especialidad.isEmpty()) especialidad = doc.selectFirst("#spnEspecilidad, td:contains(Especialidad) + td")?.text()?.trim() ?: ""
+            if (semestre.isEmpty()) semestre = doc.selectFirst("#spnSemActual, td:contains(Sem. Actual) + td")?.text()?.trim() ?: ""
             
-            estadoScraped = doc.selectFirst("td:contains(Estado) + td, td:contains(Situación) + td, #lblEstado")?.text()?.trim() ?: ""
-            statusMatriculaScraped = doc.selectFirst("td:contains(Status Matrícula) + td, td:contains(Estatus Matrícula) + td, #lblStatusMatricula")?.text()?.trim() ?: ""
+            estadoScraped = doc.selectFirst("#spnEstatus, td:contains(Estado) + td")?.text()?.trim() ?: ""
+            statusMatriculaScraped = doc.selectFirst("td:contains(Status Matrícula) + td, td:contains(Estatus Matrícula) + td")?.text()?.trim() ?: ""
             
-            val estatusAcadScraped = doc.selectFirst("td:contains(Estatus Académico) + td, #lblEstatusAcademico")?.text()?.trim() ?: ""
-            val estatusAluScraped = doc.selectFirst("td:contains(Estatus Alumno) + td, td:contains(Estatus:) + td, #lblEstatus")?.text()?.trim() ?: ""
+            val estatusAcadScraped = doc.selectFirst("td:contains(Estatus Académico) + td")?.text()?.trim() ?: ""
+            val estatusAluScraped = doc.selectFirst("td:contains(Estatus Alumno) + td")?.text()?.trim() ?: ""
 
             if (estatusAcad.isEmpty()) estatusAcad = estatusAcadScraped
             if (estatusAlu.isEmpty()) estatusAlu = estatusAluScraped
+
+            if (cdtAc == "0") cdtAc = doc.selectFirst("#spnCdtosAcumulados")?.text()?.trim() ?: "0"
+            if (cdtAct == "0") cdtAct = doc.selectFirst("#spnCdtosActuales")?.text()?.trim() ?: "0"
+            if (inscritoStr == "NO") inscritoStr = doc.selectFirst("#spnInscrito")?.text()?.trim() ?: "NO"
+            if (fReins.isEmpty()) fReins = doc.selectFirst("#spnFechaReins")?.text()?.trim() ?: ""
+            if (sinAdeudos.isEmpty()) sinAdeudos = doc.selectFirst("#pAdeudo")?.text()?.trim() ?: ""
             
-            sinAdeudos = doc.select("td, span").find { it.text().contains("ADEUDOS") }?.text()?.trim() ?: ""
+            if (sinAdeudos.isEmpty()) sinAdeudos = doc.select("td, span").find { it.text().contains("ADEUDOS") }?.text()?.trim() ?: ""
             
             doc.select("a").forEach { a ->
                 val txt = a.text().uppercase()
-                val href = a.attr("href")
+                var href = a.attr("href")
                 if (txt.contains("CALIFICACIONES") || txt.contains("KARDEX") || 
                     txt.contains("MONITOREO") || txt.contains("REINSCRIPCION") || 
                     txt.contains("CARGA") || txt.contains("CERRAR SESION")) {
+                    
                     operaciones.add(txt)
+                    
+                    // Si el href es #, usamos rutas estimadas basadas en el JS del sitio
+                    if (href == "#" || href.isBlank()) {
+                        href = when {
+                            txt.contains("KARDEX") -> "/frmConsultaKardex2015.aspx"
+                            txt.contains("CARGA") -> "/frmCargaAcademica2015.aspx"
+                            txt.contains("CALIFICACIONES") -> "/frmConsultaCalificaciones.aspx"
+                            else -> href
+                        }
+                    }
+
                     if (txt.contains("KARDEX")) kardexUrl = href
                     if (txt.contains("CARGA")) cargaUrl = href
                     if (txt.contains("CALIFICACIONES")) califUrl = href

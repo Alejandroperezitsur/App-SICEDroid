@@ -30,8 +30,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -84,15 +82,18 @@ fun ProfileScreen(
                 LoadingProfileScreen(modifier = Modifier.fillMaxSize())
             }
             is ProfileUiState.Success -> {
-                ProfileDetailScreen(
-                    profile = profileUiState.profile,
-                    onKardexClick = onKardexClick,
-                    onCargaClick = onCargaClick,
-                    onGradesClick = onGradesClick,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
-                )
+                Column(modifier = Modifier.fillMaxSize()) {
+                    LastUpdateLabel(timestamp = profileUiState.lastUpdate)
+                    ProfileDetailScreen(
+                        profile = profileUiState.profile,
+                        onKardexClick = onKardexClick,
+                        onCargaClick = onCargaClick,
+                        onGradesClick = onGradesClick,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 16.dp)
+                    )
+                }
             }
             is ProfileUiState.Error -> {
                 ProfileErrorScreen(
@@ -118,7 +119,7 @@ fun ProfileDetailScreen(
         modifier = modifier.verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // ... (Información Personal Card - unchanged logic but keep it for context)
+        // Información Personal
         Card(
             modifier = Modifier.fillMaxWidth(),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
@@ -216,6 +217,7 @@ fun ProfileDetailScreen(
                 }
             }
         }
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -329,25 +331,6 @@ fun ProfileDetailScreenPreview() {
             onKardexClick = {},
             onCargaClick = {},
             onGradesClick = {}
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun LoadingProfileScreenPreview() {
-    SICENETTheme {
-        LoadingProfileScreen()
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun ProfileErrorScreenPreview() {
-    SICENETTheme {
-        ProfileErrorScreen(
-            error = "Error al cargar perfil",
-            onRetryClick = {}
         )
     }
 }
