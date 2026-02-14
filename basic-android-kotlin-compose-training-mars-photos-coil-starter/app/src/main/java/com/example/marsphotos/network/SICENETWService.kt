@@ -24,11 +24,11 @@ val bodyacceso =
         </soap:Envelope>
     """.trimIndent()
 
-val bodyperfil =
+val bodyPerfilWithLineamiento =
     """<?xml version="1.0" encoding="utf-8"?>
 <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
-    <getAlumnoAcademico xmlns="http://tempuri.org/" />
+    <getAlumnoAcademicoWithLineamiento xmlns="http://tempuri.org/" />
   </soap:Body>
 </soap:Envelope>""".trimIndent()
 
@@ -63,7 +63,7 @@ val bodyCalifFinal =
 <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
     <getAllCalifFinalByAlumnos xmlns="http://tempuri.org/">
-      <bytModEducativo>1</bytModEducativo>
+      <bytModEducativo>%d</bytModEducativo>
     </getAllCalifFinalByAlumnos>
   </soap:Body>
 </soap:Envelope>""".trimIndent()
@@ -79,7 +79,7 @@ interface SICENETWService {
 
     @Headers(
         "Content-Type: text/xml; charset=utf-8",
-        "SOAPAction: \"http://tempuri.org/getAlumnoAcademico\""
+        "SOAPAction: \"http://tempuri.org/getAlumnoAcademicoWithLineamiento\""
     )
     @POST("/ws/wsalumnos.asmx")
     suspend fun perfil(@Body soap: RequestBody): ResponseBody

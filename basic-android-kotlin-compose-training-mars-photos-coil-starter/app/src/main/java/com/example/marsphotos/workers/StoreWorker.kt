@@ -47,6 +47,8 @@ class StoreWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx,
                             semestre = profile.semestre,
                             promedio = profile.promedio,
                             fotoUrl = profile.fotoUrl,
+                            lineamiento = profile.lineamiento,
+                            modEducativo = profile.modEducativo,
                             operaciones = profile.operaciones,
                             lastUpdate = now
                         )

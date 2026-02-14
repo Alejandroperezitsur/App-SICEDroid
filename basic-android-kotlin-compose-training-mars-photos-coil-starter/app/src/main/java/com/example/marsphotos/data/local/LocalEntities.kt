@@ -15,6 +15,8 @@ data class StudentEntity(
     val semestre: String,
     val promedio: String,
     val fotoUrl: String,
+    val lineamiento: Int = 0,
+    val modEducativo: Int = 0,
     val operaciones: List<String> = emptyList(),
     val lastUpdate: Long = System.currentTimeMillis()
 )

@@ -138,5 +138,13 @@ data class AlumnoInfo(
 
     @field:Element(name = "FechaReins", required = false)
     @param:Element(name = "FechaReins", required = false)
-    val fechaReins: String? = null
+    val fechaReins: String? = null,
+
+    @field:Element(name = "Lineamiento", required = false)
+    @param:Element(name = "Lineamiento", required = false)
+    val lineamiento: Int? = null,
+
+    @field:Element(name = "ModEducativo", required = false)
+    @param:Element(name = "ModEducativo", required = false)
+    val modEducativo: Int? = null
 )

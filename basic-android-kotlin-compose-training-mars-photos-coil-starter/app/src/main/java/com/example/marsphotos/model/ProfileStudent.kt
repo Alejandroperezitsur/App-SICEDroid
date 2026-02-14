@@ -25,6 +25,8 @@ data class ProfileStudent(
     val estatusAlumno: String = "",
     val reinscripcionFecha: String = "",
     val sinAdeudos: String = "",
+    val lineamiento: Int = 0,
+    val modEducativo: Int = 0,
     val operaciones: List<String> = emptyList(),
     // Detalles de operaciones
     val kardex: List<MateriaKardex> = emptyList(),
