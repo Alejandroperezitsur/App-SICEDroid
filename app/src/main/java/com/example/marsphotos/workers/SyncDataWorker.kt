@@ -31,28 +31,35 @@ class SyncDataWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(c
             Log.d("SyncWorker", "Starting sync for $matricula")
 
             // 1. Fetch & Save Profile
-            try {
-                val profile = snRepository.profile(matricula)
+            val profile = try {
+                val p = snRepository.profile(matricula)
                 localRepository.insertStudent(
                     StudentEntity(
                         matricula = matricula,
-                        nombre = profile.nombre,
-                        apellidos = profile.apellidos,
-                        carrera = profile.carrera,
-                        semestre = profile.semestre,
-                        promedio = profile.promedio,
-                        fotoUrl = profile.fotoUrl,
-                        operaciones = profile.operaciones
+                        nombre = p.nombre,
+                        apellidos = p.apellidos,
+                        carrera = p.carrera,
+                        semestre = p.semestre,
+                        promedio = p.promedio,
+                        fotoUrl = p.fotoUrl,
+                        lineamiento = p.lineamiento,
+                        modEducativo = p.modEducativo,
+                        operaciones = p.operaciones
                     )
                 )
                 Log.d("SyncWorker", "Profile synced")
+                p
             } catch (e: Exception) {
                 Log.e("SyncWorker", "Error syncing profile", e)
+                null
             }
+
+            val lin = profile?.lineamiento ?: 1
+            val mod = profile?.modEducativo ?: 1
 
             // 2. Fetch & Save Kardex
             try {
-                val kardexList = snRepository.getKardex(matricula)
+                val kardexList = snRepository.getKardex(matricula, lin)
                 if (kardexList.isNotEmpty()) {
                     val kardexEntities = kardexList.map { 
                         KardexEntity(
@@ -117,7 +124,7 @@ class SyncDataWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(c
 
             // 5. Fetch & Save Finales
             try {
-                val finalesList = snRepository.getCalifFinal(matricula)
+                val finalesList = snRepository.getCalifFinal(matricula, mod)
                 if (finalesList.isNotEmpty()) {
                     val entities = finalesList.map {
                         CalifFinalEntity(
