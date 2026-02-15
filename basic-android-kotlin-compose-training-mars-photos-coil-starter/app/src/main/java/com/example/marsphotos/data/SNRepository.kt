@@ -75,32 +75,6 @@ interface SNRepository {
 }
 
 /**
- * Implementación local usando base de datos
- */
-class DBLocalSNRepository(val apiDB: Any) : SNRepository {
-    override suspend fun acceso(matricula: String, contrasenia: String): Boolean {
-        return false
-    }
-
-    override suspend fun accesoObjeto(matricula: String, contrasenia: String): Usuario {
-        return Usuario(matricula = "")
-    }
-
-    override suspend fun profile(matricula: String): ProfileStudent {
-        return ProfileStudent()
-    }
-
-    override suspend fun getKardex(matricula: String, lineamiento: Int): List<MateriaKardex> = emptyList()
-    override suspend fun getCarga(matricula: String): List<MateriaCarga> = emptyList()
-    override suspend fun getCalifUnidades(matricula: String): List<MateriaParcial> = emptyList()
-    override suspend fun getCalifFinal(matricula: String, modEducativo: Int): List<MateriaFinal> = emptyList()
-
-    override suspend fun getMatricula(): String {
-        return ""
-    }
-}
-
-/**
  * Implementación de red que conecta con el servicio SICENET SOAP
  */
 class NetworkSNRepository(
