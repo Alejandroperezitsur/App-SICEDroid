@@ -20,6 +20,8 @@ package com.example.marsphotos.ui
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -106,7 +108,7 @@ fun MarsPhotosApp() {
                             navigationIcon = {
                                 androidx.compose.material3.IconButton(onClick = { currentScreen = AppScreen.PROFILE }) {
                                     androidx.compose.material3.Icon(
-                                        imageVector = androidx.compose.material.icons.Icons.Filled.ArrowBack,
+                                        imageVector = Icons.Filled.ArrowBack,
                                         contentDescription = null
                                     )
                                 }
@@ -130,7 +132,7 @@ fun MarsPhotosApp() {
                             navigationIcon = {
                                 androidx.compose.material3.IconButton(onClick = { currentScreen = AppScreen.PROFILE }) {
                                     androidx.compose.material3.Icon(
-                                        imageVector = androidx.compose.material.icons.Icons.Filled.ArrowBack,
+                                        imageVector = Icons.Filled.ArrowBack,
                                         contentDescription = null
                                     )
                                 }
@@ -154,7 +156,7 @@ fun MarsPhotosApp() {
                             navigationIcon = {
                                 androidx.compose.material3.IconButton(onClick = { currentScreen = AppScreen.PROFILE }) {
                                     androidx.compose.material3.Icon(
-                                        imageVector = androidx.compose.material.icons.Icons.Filled.ArrowBack,
+                                        imageVector = Icons.Filled.ArrowBack,
                                         contentDescription = null
                                     )
                                 }
