@@ -91,9 +91,6 @@ class NetworkSNRepository(
             .replace("'", "&apos;")
     }
 
-    /**
-     * Realiza la autenticación en SICENET
-     */
     override suspend fun acceso(matricula: String, contrasenia: String): Boolean {
         Log.d("SNRepository", "===== INICIANDO AUTENTICACIÓN =====")
         Log.d("SNRepository", "Matrícula: $matricula")
@@ -105,7 +102,6 @@ class NetworkSNRepository(
             
             Log.d("SNRepository", "Enviando SOAP Body (truncado): ${soapBody.take(100)}...")
             
-            // Usamos text/xml; charset=utf-8 explícitamente
             val response = try {
                 snApiService.acceso(soapBody.toRequestBody("text/xml;charset=utf-8".toMediaType()))
             } catch (e: retrofit2.HttpException) {
@@ -117,11 +113,6 @@ class NetworkSNRepository(
             val xmlString = response.string()
             Log.d("SNRepository", "Respuesta XML recibida: $xmlString")
             
-            // Verificación robusta de éxito
-            if (xmlString.contains("true", ignoreCase = true) || xmlString.contains(">1<")) {
-                userMatricula = matricula
-                return true
-            }
             val startIdx = xmlString.indexOf('{')
             val endIdx = xmlString.lastIndexOf('}')
             
@@ -132,27 +123,32 @@ class NetworkSNRepository(
                 try {
                     val jsonObject = Json.parseToJsonElement(jsonString).jsonObject
                     val accesoValue = jsonObject["acceso"]?.jsonPrimitive?.content
+                    val mensajeValue = jsonObject["mensaje"]?.jsonPrimitive?.content
                     
                     Log.d("SNRepository", "Valor de 'acceso': $accesoValue")
                     
-                    if (accesoValue?.lowercase() == "true" || accesoValue == "1") {
+                    if (accesoValue == null) {
+                        Log.e("SNRepository", "Campo 'acceso' ausente en respuesta de autenticación")
+                        throw IllegalStateException("Respuesta de autenticación inválida")
+                    }
+
+                    if (accesoValue.lowercase() == "true" || accesoValue == "1") {
                         userMatricula = matricula
                         return true
                     }
+
+                    if (accesoValue.lowercase() == "false" || accesoValue == "0") {
+                        val msg = mensajeValue ?: "Credenciales inválidas"
+                        Log.d("SNRepository", "Autenticación rechazada: $msg")
+                        return false
+                    }
                 } catch (e: Exception) {
                     Log.e("SNRepository", "Error parseando JSON interno", e)
-                }
-            } else {
-                // Si no es JSON, intentar parsear XML estándar usando SimpleXML
-                // Aquí podríamos usar el persister si fuera necesario, pero por ahora
-                // verificamos si contiene indicadores de éxito simples
-                if (xmlString.contains("true") || xmlString.contains(">true<")) {
-                    userMatricula = matricula
-                    return true
+                    throw IllegalStateException("Error parseando respuesta de autenticación", e)
                 }
             }
             
-            false
+            throw IllegalStateException("Respuesta de autenticación sin JSON válido")
         } catch (e: Exception) {
             Log.e("SNRepository", "❌ Error en autenticación: ${e.message}", e)
             throw e
@@ -262,7 +258,7 @@ class NetworkSNRepository(
                                 sinAdeudos = clean(sinAdeudos),
                                 lineamiento = lin,
                                 modEducativo = mod,
-                                operaciones = operaciones.distinct()
+                                operaciones = ensureDefaultOperaciones(operaciones)
                             )
                         } catch (e: Exception) {
                             Log.e("SNRepository", "❌ Error parsing profile JSON: ${e.message}")
@@ -305,7 +301,7 @@ class NetworkSNRepository(
                                     sinAdeudos = clean(sinAdeudos),
                                     lineamiento = lin,
                                     modEducativo = mod,
-                                    operaciones = operaciones.distinct()
+                                    operaciones = ensureDefaultOperaciones(operaciones)
                                 )
                             }
                         } catch (e: Exception) {
@@ -336,10 +332,10 @@ class NetworkSNRepository(
             estatusAlumno = estatusAlu,
             estatusAcademico = estatusAcad,
             fotoUrl = fotoUrl,
-            lineamiento = 1, // Fallback
-            modEducativo = 1, // Fallback
+            lineamiento = 1,
+            modEducativo = 1,
             sinAdeudos = clean(sinAdeudos),
-            operaciones = operaciones.distinct()
+            operaciones = ensureDefaultOperaciones(operaciones)
         )
     }
 
@@ -350,6 +346,15 @@ class NetworkSNRepository(
         .replace("O?", "Ó")
         .replace("&nbsp;", " ")
         .trim()
+
+    private fun ensureDefaultOperaciones(operaciones: MutableList<String>): List<String> {
+        if (operaciones.isEmpty()) {
+            operaciones.add("KARDEX - Consultar Kardex")
+            operaciones.add("CARGA ACADEMICA - Consultar carga académica")
+            operaciones.add("CALIFICACIONES - Consultar calificaciones")
+        }
+        return operaciones.distinct()
+    }
 
     /**
      * Obtiene la matrícula del usuario autenticado

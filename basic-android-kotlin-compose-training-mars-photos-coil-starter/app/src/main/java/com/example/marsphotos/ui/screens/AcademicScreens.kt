@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.marsphotos.model.MateriaCarga
 import com.example.marsphotos.model.MateriaFinal
@@ -99,7 +100,10 @@ fun GradesScreen(
     val parcialesState by viewModel.parcialesState.collectAsState()
     val finalesState by viewModel.finalesState.collectAsState()
     var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("Parciales", "Finales")
+    val tabs = listOf(
+        stringResource(id = com.example.marsphotos.R.string.grades_tab_parciales),
+        stringResource(id = com.example.marsphotos.R.string.grades_tab_finales)
+    )
 
     LaunchedEffect(Unit) {
         viewModel.loadGrades()
@@ -151,7 +155,7 @@ fun LastUpdateLabel(timestamp: Long, modifier: Modifier = Modifier) {
         val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault())
         val dateStr = sdf.format(Date(timestamp))
         Text(
-            text = "Última actualización: $dateStr",
+            text = stringResource(id = com.example.marsphotos.R.string.last_update_prefix, dateStr),
             modifier = modifier
                 .fillMaxWidth()
                 .padding(8.dp),
@@ -180,7 +184,7 @@ fun ErrorScreen(message: String, modifier: Modifier = Modifier) {
 fun KardexList(kardex: List<MateriaKardex>, modifier: Modifier = Modifier) {
     if (kardex.isEmpty()) {
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No hay materias en el Kardex")
+            Text(stringResource(id = com.example.marsphotos.R.string.empty_kardex))
         }
     } else {
         LazyColumn(
@@ -221,7 +225,7 @@ fun KardexList(kardex: List<MateriaKardex>, modifier: Modifier = Modifier) {
 fun CargaList(carga: List<MateriaCarga>, modifier: Modifier = Modifier) {
     if (carga.isEmpty()) {
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No hay carga académica actual")
+            Text(stringResource(id = com.example.marsphotos.R.string.empty_carga))
         }
     } else {
         LazyColumn(
@@ -259,7 +263,7 @@ fun CargaList(carga: List<MateriaCarga>, modifier: Modifier = Modifier) {
 fun ParcialesList(parciales: List<MateriaParcial>, modifier: Modifier = Modifier) {
     if (parciales.isEmpty()) {
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No hay calificaciones parciales disponibles")
+            Text(stringResource(id = com.example.marsphotos.R.string.empty_parciales))
         }
     } else {
         LazyColumn(
@@ -278,7 +282,7 @@ fun ParcialesList(parciales: List<MateriaParcial>, modifier: Modifier = Modifier
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             materia.parciales.forEachIndexed { index, calif ->
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text("U${index + 1}", fontSize = 12.sp, color = Color.Gray)
+                                    Text(stringResource(id = com.example.marsphotos.R.string.grades_unit_prefix, index + 1), fontSize = 12.sp, color = Color.Gray)
                                     Text(calif, fontWeight = FontWeight.Bold)
                                 }
                             }
@@ -294,7 +298,7 @@ fun ParcialesList(parciales: List<MateriaParcial>, modifier: Modifier = Modifier
 fun FinalesList(finales: List<MateriaFinal>, modifier: Modifier = Modifier) {
     if (finales.isEmpty()) {
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No hay calificaciones finales disponibles")
+            Text(stringResource(id = com.example.marsphotos.R.string.empty_finales))
         }
     } else {
         LazyColumn(

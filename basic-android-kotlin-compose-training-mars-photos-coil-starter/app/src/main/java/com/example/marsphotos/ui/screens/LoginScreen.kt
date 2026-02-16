@@ -114,13 +114,13 @@ fun LoginFormScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "SICENET",
+                    text = stringResource(id = com.example.marsphotos.R.string.login_title_app),
                     fontSize = 28.sp,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
                 
                 Text(
-                    text = "Iniciar Sesión",
+                    text = stringResource(id = com.example.marsphotos.R.string.login_title_screen),
                     fontSize = 20.sp,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
@@ -128,7 +128,7 @@ fun LoginFormScreen(
                 OutlinedTextField(
                     value = matricula,
                     onValueChange = onMatriculaChange,
-                    label = { Text("Matrícula") },
+                    label = { Text(stringResource(id = com.example.marsphotos.R.string.login_field_matricula)) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Text,
@@ -140,7 +140,7 @@ fun LoginFormScreen(
                 OutlinedTextField(
                     value = contrasenia,
                     onValueChange = onContraseniaChange,
-                    label = { Text("Contraseña") },
+                    label = { Text(stringResource(id = com.example.marsphotos.R.string.login_field_contrasenia)) },
                     modifier = Modifier.fillMaxWidth(),
                     visualTransformation = if (passwordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(
@@ -152,7 +152,7 @@ fun LoginFormScreen(
                         IconButton(onClick = { passwordVisible.value = !passwordVisible.value }) {
                             Icon(
                                 imageVector = if (passwordVisible.value) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                                contentDescription = if (passwordVisible.value) "Ocultar contraseña" else "Mostrar contraseña"
+                                contentDescription = null
                             )
                         }
                     }
@@ -166,7 +166,7 @@ fun LoginFormScreen(
                         .fillMaxWidth()
                         .height(48.dp)
                 ) {
-                    Text("Iniciar Sesión")
+                    Text(stringResource(id = com.example.marsphotos.R.string.login_button))
                 }
             }
         }
@@ -188,7 +188,7 @@ fun LoadingLoginScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.size(50.dp)
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Text("Autenticando...")
+        Text(stringResource(id = com.example.marsphotos.R.string.login_loading))
     }
 }
 
@@ -221,7 +221,7 @@ fun LoginErrorScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Error",
+                    text = stringResource(id = com.example.marsphotos.R.string.login_error_title),
                     fontSize = 20.sp
                 )
                 
@@ -236,7 +236,7 @@ fun LoginErrorScreen(
                         .fillMaxWidth()
                         .height(48.dp)
                 ) {
-                    Text("Intentar de nuevo")
+                    Text(stringResource(id = com.example.marsphotos.R.string.login_error_retry))
                 }
             }
         }

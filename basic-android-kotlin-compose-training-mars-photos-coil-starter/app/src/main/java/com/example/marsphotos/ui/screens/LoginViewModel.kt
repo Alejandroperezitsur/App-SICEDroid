@@ -12,16 +12,20 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.work.Constraints
+import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.example.marsphotos.MarsPhotosApplication
 import com.example.marsphotos.data.SNRepository
-import com.example.marsphotos.workers.SyncDataWorker
+import com.example.marsphotos.workers.LoginFetchWorker
+import com.example.marsphotos.workers.LoginStoreWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
-import java.io.IOException
 
 /**
  * UI state para la pantalla de Login
@@ -69,33 +73,69 @@ class LoginViewModel(
 
     fun login() {
         if (matricula.isBlank() || contrasenia.isBlank()) {
-            loginUiState = LoginUiState.Error("Por favor ingresa matrícula y contraseña")
+            val message = application.getString(com.example.marsphotos.R.string.error_empty_credentials)
+            loginUiState = LoginUiState.Error(message)
+            return
+        }
+
+        if (!isOnline()) {
+            val message = application.getString(com.example.marsphotos.R.string.error_network)
+            loginUiState = LoginUiState.Error(message)
             return
         }
 
         viewModelScope.launch(Dispatchers.IO) {
             loginUiState = LoginUiState.Loading
-            loginUiState = try {
-                val success = snRepository.acceso(matricula, contrasenia)
-                if (success) {
-                    if (isOnline()) {
-                        val syncRequest = OneTimeWorkRequestBuilder<SyncDataWorker>().build()
-                        workManager.beginUniqueWork(
-                            "Sync_FULL",
-                            ExistingWorkPolicy.REPLACE,
-                            syncRequest
-                        ).enqueue()
+
+            val constraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build()
+
+            val inputData: Data = workDataOf(
+                LoginFetchWorker.KEY_MATRICULA to matricula,
+                LoginFetchWorker.KEY_CONTRASENIA to contrasenia
+            )
+
+            val fetchRequest = OneTimeWorkRequestBuilder<LoginFetchWorker>()
+                .setInputData(inputData)
+                .setConstraints(constraints)
+                .build()
+
+            val storeRequest = OneTimeWorkRequestBuilder<LoginStoreWorker>()
+                .build()
+
+            workManager.beginUniqueWork(
+                "LoginChain",
+                ExistingWorkPolicy.REPLACE,
+                fetchRequest
+            ).then(storeRequest).enqueue()
+
+            workManager.getWorkInfoByIdFlow(fetchRequest.id).collect { workInfo ->
+                when (workInfo.state) {
+                    WorkInfo.State.ENQUEUED, WorkInfo.State.RUNNING -> {
+                        loginUiState = LoginUiState.Loading
                     }
-                    LoginUiState.Success(matricula)
-                } else {
-                    LoginUiState.Error("Credenciales inválidas")
+                    WorkInfo.State.SUCCEEDED -> {
+                        loginUiState = LoginUiState.Success(matricula)
+                    }
+                    WorkInfo.State.FAILED -> {
+                        val errorCode = workInfo.outputData.getString(LoginFetchWorker.KEY_ERROR_CODE) ?: "unexpected_error"
+                        val errorMessage = workInfo.outputData.getString(LoginFetchWorker.KEY_ERROR_MESSAGE)
+                        val message = when (errorCode) {
+                            "invalid_credentials" -> application.getString(com.example.marsphotos.R.string.error_invalid_credentials)
+                            "network_error" -> application.getString(com.example.marsphotos.R.string.error_network)
+                            "server_error" -> application.getString(com.example.marsphotos.R.string.error_server)
+                            "missing_credentials" -> application.getString(com.example.marsphotos.R.string.error_empty_credentials)
+                            else -> errorMessage ?: application.getString(com.example.marsphotos.R.string.error_unexpected)
+                        }
+                        loginUiState = LoginUiState.Error(message)
+                    }
+                    WorkInfo.State.CANCELLED -> {
+                        val message = application.getString(com.example.marsphotos.R.string.error_login_cancelled)
+                        loginUiState = LoginUiState.Error(message)
+                    }
+                    else -> {}
                 }
-            } catch (e: IOException) {
-                LoginUiState.Error("Error de conexión: ${e.message}")
-            } catch (e: HttpException) {
-                LoginUiState.Error("Error del servidor: ${e.message}")
-            } catch (e: Exception) {
-                LoginUiState.Error("Error inesperado: ${e.message}")
             }
         }
     }

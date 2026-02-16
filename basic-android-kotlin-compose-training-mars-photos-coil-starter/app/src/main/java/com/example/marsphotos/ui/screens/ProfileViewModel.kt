@@ -12,8 +12,10 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.work.Constraints
 import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
@@ -59,13 +61,18 @@ class ProfileViewModel(
 
     private fun scheduleSync(matricula: String) {
         val workName = "Sync_PROFILE"
-        
+
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
         val fetchData = Data.Builder()
             .putString("feature", "PROFILE")
             .build()
 
         val fetchRequest = OneTimeWorkRequestBuilder<FetchWorker>()
             .setInputData(fetchData)
+            .setConstraints(constraints)
             .build()
 
         val storeRequest = OneTimeWorkRequestBuilder<StoreWorker>()
@@ -124,7 +131,20 @@ class ProfileViewModel(
                         carrera = localStudent.carrera,
                         semestre = localStudent.semestre,
                         promedio = localStudent.promedio,
+                        estado = localStudent.estado,
+                        statusMatricula = localStudent.statusMatricula,
                         fotoUrl = localStudent.fotoUrl,
+                        especialidad = localStudent.especialidad,
+                        cdtsReunidos = localStudent.cdtsReunidos,
+                        cdtsActuales = localStudent.cdtsActuales,
+                        semActual = localStudent.semActual,
+                        inscrito = localStudent.inscrito,
+                        estatusAcademico = localStudent.estatusAcademico,
+                        estatusAlumno = localStudent.estatusAlumno,
+                        reinscripcionFecha = localStudent.reinscripcionFecha,
+                        sinAdeudos = localStudent.sinAdeudos,
+                        lineamiento = localStudent.lineamiento,
+                        modEducativo = localStudent.modEducativo,
                         operaciones = localStudent.operaciones
                     )
                     profileUiState = ProfileUiState.Success(profile, localStudent.lastUpdate)

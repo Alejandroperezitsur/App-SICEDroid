@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import com.example.marsphotos.model.ProfileStudent
 import com.example.marsphotos.ui.theme.SICENETTheme
 import coil.compose.AsyncImage
@@ -65,12 +66,12 @@ fun ProfileScreen(
         // Top AppBar
         @OptIn(ExperimentalMaterial3Api::class)
         TopAppBar(
-            title = { Text("Perfil Académico") },
+            title = { Text(stringResource(id = com.example.marsphotos.R.string.profile_screen_title)) },
             navigationIcon = {
                 IconButton(onClick = onBackClick) {
                     Icon(
                         imageVector = Icons.Filled.ArrowBack,
-                        contentDescription = "Atrás"
+                        contentDescription = null
                     )
                 }
             }
@@ -129,7 +130,7 @@ fun ProfileDetailScreen(
                 modifier = Modifier.padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(text = "Información Personal", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(text = stringResource(id = com.example.marsphotos.R.string.profile_section_personal), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Divider()
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (profile.fotoUrl.isNotEmpty()) {
@@ -141,9 +142,9 @@ fun ProfileDetailScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                     }
                     Column {
-                        ProfileInfoRow(label = "Matrícula", value = profile.matricula)
+                        ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_matricula), value = profile.matricula)
                         val fullName = if (profile.apellidos.isNotEmpty()) "${profile.nombre} ${profile.apellidos}" else profile.nombre
-                        ProfileInfoRow(label = "Nombre", value = fullName)
+                        ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_nombre), value = fullName)
                     }
                 }
             }
@@ -159,21 +160,21 @@ fun ProfileDetailScreen(
                 modifier = Modifier.padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(text = "Información Académica", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(text = stringResource(id = com.example.marsphotos.R.string.profile_section_academic), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Divider()
-                ProfileInfoRow(label = "Carrera", value = profile.carrera)
-                ProfileInfoRow(label = "Estatus Académico", value = profile.estatusAcademico)
-                ProfileInfoRow(label = "Especialidad", value = profile.especialidad)
-                ProfileInfoRow(label = "Semestre", value = profile.semestre)
-                ProfileInfoRow(label = "Promedio", value = profile.promedio)
-                ProfileInfoRow(label = "Estado", value = profile.estado)
-                ProfileInfoRow(label = "Status Matrícula", value = profile.statusMatricula)
-                ProfileInfoRow(label = "Estatus Alumno", value = profile.estatusAlumno)
+                ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_carrera), value = profile.carrera)
+                ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_estatus_academico), value = profile.estatusAcademico)
+                ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_especialidad), value = profile.especialidad)
+                ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_semestre), value = profile.semestre)
+                ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_promedio), value = profile.promedio)
+                ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_estado), value = profile.estado)
+                ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_status_matricula), value = profile.statusMatricula)
+                ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_estatus_alumno), value = profile.estatusAlumno)
                 Divider()
-                ProfileInfoRow(label = "Cdts. Reunidos", value = profile.cdtsReunidos)
-                ProfileInfoRow(label = "Cdts. Actuales", value = profile.cdtsActuales)
-                ProfileInfoRow(label = "Inscrito", value = profile.inscrito)
-                ProfileInfoRow(label = "Reinscripción", value = profile.reinscripcionFecha)
+                ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_cdts_reunidos), value = profile.cdtsReunidos)
+                ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_cdts_actuales), value = profile.cdtsActuales)
+                ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_inscrito), value = profile.inscrito)
+                ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_reinscripcion), value = profile.reinscripcionFecha)
                 
                 if (profile.sinAdeudos.isNotEmpty()) {
                     Text(text = profile.sinAdeudos, color = Color(0xFF006400), fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
@@ -192,7 +193,7 @@ fun ProfileDetailScreen(
                     modifier = Modifier.padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text(text = "Operaciones Académicas", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(text = stringResource(id = com.example.marsphotos.R.string.profile_section_operaciones), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     Divider()
                     profile.operaciones.forEach { op ->
                         val onClick = when {
@@ -210,7 +211,7 @@ fun ProfileDetailScreen(
                         ) {
                             Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Text(text = op, modifier = Modifier.weight(1f), fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                                Icon(imageVector = Icons.Filled.Info, contentDescription = "Ver", tint = Color.Gray)
+                                Icon(imageVector = Icons.Filled.Info, contentDescription = stringResource(id = com.example.marsphotos.R.string.profile_operations_icon_content_description), tint = Color.Gray)
                             }
                         }
                     }
@@ -259,7 +260,7 @@ fun LoadingProfileScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.size(50.dp)
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Text("Cargando perfil...")
+        Text(stringResource(id = com.example.marsphotos.R.string.profile_loading))
     }
 }
 
@@ -290,7 +291,7 @@ fun ProfileErrorScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Error",
+                    text = stringResource(id = com.example.marsphotos.R.string.login_error_title),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -306,7 +307,7 @@ fun ProfileErrorScreen(
                         .fillMaxWidth()
                         .height(48.dp)
                 ) {
-                    Text("Volver atrás")
+                    Text(stringResource(id = com.example.marsphotos.R.string.profile_error_back))
                 }
             }
         }

@@ -136,11 +136,12 @@ fun ErrorScreen( retryAction : () -> Unit ,  modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
-            painter = painterResource(id = R.drawable.ic_connection_error), contentDescription = ""
+            painter = painterResource(id = R.drawable.ic_connection_error),
+            contentDescription = stringResource(id = com.example.marsphotos.R.string.home_error_image_content_description)
         )
-        Text(text = stringResource(R.string.loading_failed), modifier = Modifier.padding(16.dp))
-        Button( onClick = retryAction) {
-            Text(stringResource(R.string.retry))
+        Text(text = stringResource(id = com.example.marsphotos.R.string.home_error_message), modifier = Modifier.padding(16.dp))
+        Button(onClick = retryAction) {
+            Text(stringResource(id = com.example.marsphotos.R.string.home_retry))
         }
     }
 }

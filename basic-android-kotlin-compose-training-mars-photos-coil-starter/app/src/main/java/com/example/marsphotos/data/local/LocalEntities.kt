@@ -14,16 +14,29 @@ data class StudentEntity(
     val carrera: String,
     val semestre: String,
     val promedio: String,
+    val estado: String = "",
+    val statusMatricula: String = "",
     val fotoUrl: String,
+    val especialidad: String = "",
+    val cdtsReunidos: String = "",
+    val cdtsActuales: String = "",
+    val semActual: String = "",
+    val inscrito: String = "",
+    val estatusAcademico: String = "",
+    val estatusAlumno: String = "",
+    val reinscripcionFecha: String = "",
+    val sinAdeudos: String = "",
     val lineamiento: Int = 0,
     val modEducativo: Int = 0,
     val operaciones: List<String> = emptyList(),
     val lastUpdate: Long = System.currentTimeMillis()
 )
 
-@Entity(tableName = "kardex_table")
+@Entity(
+    tableName = "kardex_table",
+    primaryKeys = ["matricula", "clave", "periodo"]
+)
 data class KardexEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val matricula: String,
     val clave: String,
     val nombre: String,
@@ -33,9 +46,11 @@ data class KardexEntity(
     val lastUpdate: Long = System.currentTimeMillis()
 )
 
-@Entity(tableName = "carga_table")
+@Entity(
+    tableName = "carga_table",
+    primaryKeys = ["matricula", "nombre", "grupo"]
+)
 data class CargaEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val matricula: String,
     val nombre: String,
     val docente: String,
@@ -50,18 +65,22 @@ data class CargaEntity(
     val lastUpdate: Long = System.currentTimeMillis()
 )
 
-@Entity(tableName = "calif_unidad_table")
+@Entity(
+    tableName = "calif_unidad_table",
+    primaryKeys = ["matricula", "materia"]
+)
 data class CalifUnidadEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val matricula: String,
     val materia: String,
     val parciales: List<String>, // Requires Converter
     val lastUpdate: Long = System.currentTimeMillis()
 )
 
-@Entity(tableName = "calif_final_table")
+@Entity(
+    tableName = "calif_final_table",
+    primaryKeys = ["matricula", "materia"]
+)
 data class CalifFinalEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val matricula: String,
     val materia: String,
     val calif: String,

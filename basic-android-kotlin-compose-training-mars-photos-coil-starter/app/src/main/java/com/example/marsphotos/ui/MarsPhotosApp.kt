@@ -20,8 +20,6 @@ package com.example.marsphotos.ui
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -104,12 +102,12 @@ fun MarsPhotosApp() {
                 Scaffold(
                     topBar = {
                         androidx.compose.material3.TopAppBar(
-                            title = { Text("Kardex") },
+                            title = { Text(text = androidx.compose.ui.res.stringResource(id = com.example.marsphotos.R.string.kardex_title)) },
                             navigationIcon = {
                                 androidx.compose.material3.IconButton(onClick = { currentScreen = AppScreen.PROFILE }) {
                                     androidx.compose.material3.Icon(
                                         imageVector = androidx.compose.material.icons.Icons.Filled.ArrowBack,
-                                        contentDescription = "Atrás"
+                                        contentDescription = null
                                     )
                                 }
                             }
@@ -128,12 +126,12 @@ fun MarsPhotosApp() {
                 Scaffold(
                     topBar = {
                         androidx.compose.material3.TopAppBar(
-                            title = { Text("Carga Académica") },
+                            title = { Text(text = androidx.compose.ui.res.stringResource(id = com.example.marsphotos.R.string.carga_title)) },
                             navigationIcon = {
                                 androidx.compose.material3.IconButton(onClick = { currentScreen = AppScreen.PROFILE }) {
                                     androidx.compose.material3.Icon(
                                         imageVector = androidx.compose.material.icons.Icons.Filled.ArrowBack,
-                                        contentDescription = "Atrás"
+                                        contentDescription = null
                                     )
                                 }
                             }
@@ -152,12 +150,12 @@ fun MarsPhotosApp() {
                 Scaffold(
                     topBar = {
                         androidx.compose.material3.TopAppBar(
-                            title = { Text("Calificaciones") },
+                            title = { Text(text = androidx.compose.ui.res.stringResource(id = com.example.marsphotos.R.string.grades_title)) },
                             navigationIcon = {
                                 androidx.compose.material3.IconButton(onClick = { currentScreen = AppScreen.PROFILE }) {
                                     androidx.compose.material3.Icon(
                                         imageVector = androidx.compose.material.icons.Icons.Filled.ArrowBack,
-                                        contentDescription = "Atrás"
+                                        contentDescription = null
                                     )
                                 }
                             }

@@ -9,8 +9,10 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.work.Constraints
 import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
@@ -65,13 +67,18 @@ class AcademicViewModel(
 
     private fun scheduleSync(feature: String, onWorkerFinished: () -> Unit, onWorkerFailed: (String) -> Unit) {
         val workName = "Sync_${feature}"
-        
+
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
         val fetchData = Data.Builder()
             .putString("feature", feature)
             .build()
 
         val fetchRequest = OneTimeWorkRequestBuilder<FetchWorker>()
             .setInputData(fetchData)
+            .setConstraints(constraints)
             .build()
 
         val storeRequest = OneTimeWorkRequestBuilder<StoreWorker>()
