@@ -1,4 +1,6 @@
 
+@file:Suppress("UnstableApiUsage")
+
 pluginManagement {
     repositories {
         gradlePluginPortal()
@@ -13,6 +15,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "API-SICEnet"
+rootProject.name = "SICEnetProject"
 include(":app")
-project(":app").projectDir = file("basic-android-kotlin-compose-training-mars-photos-coil-starter/app")
