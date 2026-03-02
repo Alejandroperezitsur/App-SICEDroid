@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -128,6 +129,21 @@ fun GradesScreen(
                     is AcademicUiState.Success -> {
                         Column {
                             LastUpdateLabel(timestamp = state.lastUpdate)
+                            // DEBUG: Mostrar info de depuración
+                            Text(
+                                text = "DEBUG: ${state.data.size} materias cargadas",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.Green,
+                                modifier = Modifier.padding(8.dp)
+                            )
+                            if (state.data.isNotEmpty()) {
+                                Text(
+                                    text = "Primera materia: ${state.data.first().materia} - ${state.data.first().parciales.size} parciales",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.Green,
+                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                )
+                            }
                             ParcialesList(parciales = state.data)
                         }
                     }
@@ -277,13 +293,54 @@ fun ParcialesList(parciales: List<MateriaParcial>, modifier: Modifier = Modifier
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(text = materia.materia, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            text = materia.materia, 
+                            fontWeight = FontWeight.Bold, 
+                            style = MaterialTheme.typography.titleMedium
+                        )
                         Divider(modifier = Modifier.padding(vertical = 8.dp))
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            materia.parciales.forEachIndexed { index, calif ->
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(stringResource(id = com.example.marsphotos.R.string.grades_unit_prefix, index + 1), fontSize = 12.sp, color = Color.Gray)
-                                    Text(calif, fontWeight = FontWeight.Bold)
+                        
+                        // Usar scroll horizontal si hay muchos parciales
+                        if (materia.parciales.size > 4) {
+                            androidx.compose.foundation.lazy.LazyRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                items(materia.parciales.size) { index ->
+                                    val calif = materia.parciales[index]
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(
+                                            stringResource(id = com.example.marsphotos.R.string.grades_unit_prefix, index + 1), 
+                                            fontSize = 12.sp, 
+                                            color = Color.Gray
+                                        )
+                                        Text(
+                                            calif, 
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (calif == "0") Color.Gray else MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
+                            }
+                        } else {
+                            // Para 4 o menos parciales, mostrar en una fila
+                            Row(
+                                modifier = Modifier.fillMaxWidth(), 
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                materia.parciales.forEachIndexed { index, calif ->
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(
+                                            stringResource(id = com.example.marsphotos.R.string.grades_unit_prefix, index + 1), 
+                                            fontSize = 12.sp, 
+                                            color = Color.Gray
+                                        )
+                                        Text(
+                                            calif, 
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (calif == "0") Color.Gray else MaterialTheme.colorScheme.primary
+                                        )
+                                    }
                                 }
                             }
                         }

@@ -101,10 +101,19 @@ class StoreWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx,
                     })
                 }
                 "GRADES" -> {
+                    Log.e("StoreWorker", "=== GUARDANDO GRADES ===")
+                    Log.e("StoreWorker", "dataJson: ${dataJson.take(500)}...")
+                    
                     val gradesData = gson.fromJson(dataJson, com.example.marsphotos.model.GradesData::class.java)
                     
                     val parciales = gradesData.parciales
                     val finales = gradesData.finales
+                    
+                    Log.e("StoreWorker", "Parciales recibidos: ${parciales.size}")
+                    parciales.forEachIndexed { index, materia ->
+                        Log.d("StoreWorker", "[$index] ${materia.materia}: ${materia.parciales}")
+                    }
+                    Log.e("StoreWorker", "Finales recibidos: ${finales.size}")
 
                     localRepository.updateCalifUnidad(matricula, parciales.map {
                         CalifUnidadEntity(
@@ -114,6 +123,8 @@ class StoreWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx,
                             lastUpdate = now
                         )
                     })
+                    Log.e("StoreWorker", "✅ updateCalifUnidad completado")
+                    
                     localRepository.updateCalifFinal(matricula, finales.map {
                         CalifFinalEntity(
                             matricula = matricula,
@@ -122,6 +133,7 @@ class StoreWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx,
                             lastUpdate = now
                         )
                     })
+                    Log.e("StoreWorker", "✅ updateCalifFinal completado")
                 }
             }
             Result.success()

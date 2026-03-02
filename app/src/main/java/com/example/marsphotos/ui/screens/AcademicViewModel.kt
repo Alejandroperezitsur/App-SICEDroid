@@ -294,8 +294,20 @@ class AcademicViewModel(
     private suspend fun loadGradesFromLocal(matricula: String, isInitialLoad: Boolean = false) {
         withContext(Dispatchers.IO) {
             try {
+                android.util.Log.e("AcademicVM", "=== loadGradesFromLocal ===")
+                android.util.Log.e("AcademicVM", "Matrícula: $matricula, isInitialLoad: $isInitialLoad")
+                
                 val localParciales = localRepository.getCalifUnidadSync(matricula)
                 val localFinales = localRepository.getCalifFinalSync(matricula)
+
+                android.util.Log.e("AcademicVM", "Parciales locales: ${localParciales.size} items")
+                android.util.Log.e("AcademicVM", "Finales locales: ${localFinales.size} items")
+                
+                if (localParciales.isNotEmpty()) {
+                    localParciales.forEachIndexed { index, entity ->
+                        android.util.Log.d("AcademicVM", "[$index] ${entity.materia}: ${entity.parciales}")
+                    }
+                }
 
                 if (localParciales.isNotEmpty() || localFinales.isNotEmpty()) {
                     val pList = localParciales.map { entity ->
@@ -304,6 +316,8 @@ class AcademicViewModel(
                     val fList = localFinales.map { entity ->
                         MateriaFinal(materia = entity.materia, calif = entity.calif)
                     }
+                    
+                    android.util.Log.e("AcademicVM", "✅ pList: ${pList.size}, fList: ${fList.size}")
                     
                     val lastUpdate = localParciales.firstOrNull()?.lastUpdate ?: localFinales.firstOrNull()?.lastUpdate ?: 0
                     _parcialesState.value = AcademicUiState.Success(pList, lastUpdate)
@@ -315,11 +329,12 @@ class AcademicViewModel(
                         _finalesState.value = err
                     }
                 } else {
-                    val successEmpty = AcademicUiState.Success(emptyList<Nothing>(), System.currentTimeMillis())
+                    android.util.Log.e("AcademicVM", "⚠️ No hay datos locales, mostrando listas vacías")
                     _parcialesState.value = AcademicUiState.Success(emptyList(), System.currentTimeMillis())
                     _finalesState.value = AcademicUiState.Success(emptyList(), System.currentTimeMillis())
                 }
             } catch (e: Exception) {
+                android.util.Log.e("AcademicVM", "❌ Error en loadGradesFromLocal: ${e.message}", e)
                 val err = AcademicUiState.Error("Error local: ${e.message}")
                 _parcialesState.value = err
                 _finalesState.value = err

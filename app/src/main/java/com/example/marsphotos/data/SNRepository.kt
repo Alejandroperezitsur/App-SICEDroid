@@ -3,6 +3,8 @@ package com.example.marsphotos.data
 import android.util.Log
 import com.example.marsphotos.model.*
 import com.example.marsphotos.network.SICENETWService
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.serialization.json.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -431,19 +433,56 @@ class NetworkSNRepository(
 
     override suspend fun getCalifUnidades(matricula: String): List<MateriaParcial> {
         try {
-            Log.d("SNRepository", "Solicitando Parciales SOAP...")
+            Log.e("SNRepository", "=== INICIANDO getCalifUnidades ===")
+            Log.e("SNRepository", "Matrícula: $matricula")
+            
             val soapBody = bodyCalifUnidades
+            Log.d("SNRepository", "SOAP Body: $soapBody")
+            
             val response = snApiService.parcialesSoap(soapBody.toRequestBody("text/xml; charset=utf-8".toMediaType()))
             val xmlString = response.string()
+            Log.e("SNRepository", "Respuesta XML completa: $xmlString")
             
             val result = extractResult(xmlString, "getCalifUnidadesByAlumnoResult")
-            if (result != null) {
-                Log.d("SNRepository", "Parciales JSON Raw: ${result.take(500)}...")
-                return Json { ignoreUnknownKeys = true }.decodeFromString<List<MateriaParcial>>(result)
+            if (result == null) {
+                Log.e("SNRepository", "❌ No se pudo extraer getCalifUnidadesByAlumnoResult del XML")
+                return emptyList()
+            }
+            
+            Log.e("SNRepository", "JSON extraído: $result")
+            
+            // Intentar parsear primero como MateriaParcialRaw (modelo flexible)
+            return try {
+                val gson = Gson()
+                val listType = object : TypeToken<List<MateriaParcialRaw>>() {}.type
+                val rawList = gson.fromJson<List<MateriaParcialRaw>>(result, listType)
+                
+                Log.e("SNRepository", "✅ Parseado como MateriaParcialRaw. Items: ${rawList?.size ?: 0}")
+                
+                val convertedList = rawList?.map { raw ->
+                    val parcial = raw.toMateriaParcial()
+                    Log.d("SNRepository", "Materia: ${parcial.materia}, Parciales: ${parcial.parciales.size} - ${parcial.parciales}")
+                    parcial
+                } ?: emptyList()
+                
+                Log.e("SNRepository", "✅ Total materias convertidas: ${convertedList.size}")
+                convertedList
+            } catch (e: Exception) {
+                Log.e("SNRepository", "❌ Error parseando como MateriaParcialRaw: ${e.message}")
+                Log.e("SNRepository", "Intentando como MateriaParcial directo...")
+                
+                try {
+                    val list = Json { ignoreUnknownKeys = true }.decodeFromString<List<MateriaParcial>>(result)
+                    Log.e("SNRepository", "✅ Parseado como MateriaParcial. Items: ${list.size}")
+                    list
+                } catch (e2: Exception) {
+                    Log.e("SNRepository", "❌ Error también parseando como MateriaParcial: ${e2.message}")
+                    emptyList()
+                }
             }
         } catch (e: Exception) {
-            Log.e("SNRepository", "Error parsing Parciales JSON", e)
+            Log.e("SNRepository", "❌ Error general en getCalifUnidades: ${e.message}", e)
+            return emptyList()
         }
-        return emptyList()
     }
 }
