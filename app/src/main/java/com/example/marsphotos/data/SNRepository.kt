@@ -1,133 +1,122 @@
-/*
- * Copyright (C) 2023 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.example.marsphotos.data
 
 import android.util.Log
-import com.example.marsphotos.model.AccesoLoginResponse
-import com.example.marsphotos.model.AlumnoInfo
-import com.example.marsphotos.model.BodyAccesoResponse
-import com.example.marsphotos.model.EnvelopeSobreAcceso
-import com.example.marsphotos.model.PerfilDataSet
-import com.example.marsphotos.model.MateriaKardex
-import com.example.marsphotos.model.MateriaCarga
-import com.example.marsphotos.model.MateriaParcial
-import com.example.marsphotos.model.MateriaFinal
-import com.example.marsphotos.model.ProfileStudent
-import com.example.marsphotos.model.Usuario
+import com.example.marsphotos.model.*
 import com.example.marsphotos.network.SICENETWService
-import com.example.marsphotos.network.bodyacceso
-import com.example.marsphotos.network.bodyPerfilWithLineamiento
-import com.example.marsphotos.network.bodyKardex
-import com.example.marsphotos.network.bodyCarga
-import com.example.marsphotos.network.bodyParciales
-import com.example.marsphotos.network.bodyCalifFinal
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.simpleframework.xml.core.Persister
-import org.jsoup.Jsoup
-import retrofit2.HttpException
-import java.net.URL
 
-/**
- * Interface para acceder a los servicios SICENET
- */
 interface SNRepository {
-    /** Autenticación en SICENET */
     suspend fun acceso(matricula: String, contrasenia: String): Boolean
-    
-    /** Obtiene el objeto Usuario autenticado */
     suspend fun accesoObjeto(matricula: String, contrasenia: String): Usuario
-    
-    /** Obtiene el perfil académico del estudiante */
     suspend fun profile(matricula: String): ProfileStudent
-    
-    /** Obtiene el Kardex */
     suspend fun getKardex(matricula: String, lineamiento: Int = 1): List<MateriaKardex>
-
-    /** Obtiene la Carga Académica */
     suspend fun getCarga(matricula: String): List<MateriaCarga>
-
-    /** Obtiene Calificaciones Parciales */
-    suspend fun getCalifUnidades(matricula: String): List<MateriaParcial>
-
-    /** Obtiene Calificaciones Finales */
     suspend fun getCalifFinal(matricula: String, modEducativo: Int = 1): List<MateriaFinal>
-
-    /** Obtiene la matrícula del usuario autenticado */
+    suspend fun getCalifUnidades(matricula: String): List<MateriaParcial>
     suspend fun getMatricula(): String
 }
 
-/**
- * Implementación de red que conecta con el servicio SICENET SOAP
- */
 class NetworkSNRepository(
     private val snApiService: SICENETWService
 ) : SNRepository {
-    
+
     private var userMatricula: String = ""
 
-    private fun escapeXml(input: String): String {
-        return input.replace("&", "&amp;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
-            .replace("\"", "&quot;")
-            .replace("'", "&apos;")
-    }
+    // SOAP Body templates
+    private val bodyLogin = """
+        <?xml version="1.0" encoding="utf-8"?>
+        <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap:Body>
+            <accesoLogin xmlns="http://tempuri.org/">
+              <strMatricula>%s</strMatricula>
+              <strContrasenia>%s</strContrasenia>
+              <tipoUsuario>ALUMNO</tipoUsuario>
+            </accesoLogin>
+          </soap:Body>
+        </soap:Envelope>
+    """.trimIndent()
 
+    private val bodyPerfilWithLineamiento = """
+        <?xml version="1.0" encoding="utf-8"?>
+        <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap:Body>
+            <getAlumnoAcademicoWithLineamiento xmlns="http://tempuri.org/" />
+          </soap:Body>
+        </soap:Envelope>
+    """.trimIndent()
+
+    private val bodyKardex = """
+        <?xml version="1.0" encoding="utf-8"?>
+        <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap:Body>
+            <getAllKardexConPromedioByAlumno xmlns="http://tempuri.org/">
+              <aluLineamiento>%d</aluLineamiento>
+            </getAllKardexConPromedioByAlumno>
+          </soap:Body>
+        </soap:Envelope>
+    """.trimIndent()
+
+    private val bodyCarga = """
+        <?xml version="1.0" encoding="utf-8"?>
+        <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap:Body>
+            <getCargaAcademicaByAlumno xmlns="http://tempuri.org/" />
+          </soap:Body>
+        </soap:Envelope>
+    """.trimIndent()
+
+    private val bodyCalifFinal = """
+        <?xml version="1.0" encoding="utf-8"?>
+        <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap:Body>
+            <getAllCalifFinalByAlumnos xmlns="http://tempuri.org/">
+              <bytModEducativo>%d</bytModEducativo>
+            </getAllCalifFinalByAlumnos>
+          </soap:Body>
+        </soap:Envelope>
+    """.trimIndent()
+
+    private val bodyCalifUnidades = """
+        <?xml version="1.0" encoding="utf-8"?>
+        <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap:Body>
+            <getCalifUnidadesByAlumno xmlns="http://tempuri.org/" />
+          </soap:Body>
+        </soap:Envelope>
+    """.trimIndent()
+
+    /**
+     * Autentica al usuario en el SICEnet
+     */
     override suspend fun acceso(matricula: String, contrasenia: String): Boolean {
         Log.d("SNRepository", "===== INICIANDO AUTENTICACIÓN =====")
         Log.d("SNRepository", "Matrícula: $matricula")
         
-        return try {
-            val safeMatricula = escapeXml(matricula)
-            val safeContrasenia = escapeXml(contrasenia)
-            val soapBody = bodyacceso.format(safeMatricula.uppercase(), safeContrasenia)
-            
+        try {
+            val soapBody = bodyLogin.format(matricula, contrasenia)
             Log.d("SNRepository", "Enviando SOAP Body (truncado): ${soapBody.take(100)}...")
             
-            val response = try {
-                snApiService.acceso(soapBody.toRequestBody("text/xml;charset=utf-8".toMediaType()))
-            } catch (e: retrofit2.HttpException) {
-                val errorBody = e.response()?.errorBody()?.string()
-                Log.e("SNRepository", "❌ HTTP Error ${e.code()}: $errorBody")
-                throw e
-            }
-            
+            val response = snApiService.acceso(soapBody.toRequestBody("text/xml; charset=utf-8".toMediaType()))
             val xmlString = response.string()
             Log.d("SNRepository", "Respuesta XML recibida: $xmlString")
-            
-            val startIdx = xmlString.indexOf('{')
-            val endIdx = xmlString.lastIndexOf('}')
-            
-            if (startIdx != -1 && endIdx != -1) {
-                val jsonString = xmlString.substring(startIdx, endIdx + 1).trim()
-                Log.d("SNRepository", "JSON extraído: $jsonString")
-                
+
+            val resultJson = extractResult(xmlString, "accesoLoginResult")
+            Log.d("SNRepository", "JSON extraído: $resultJson")
+
+            if (resultJson != null) {
                 try {
-                    val jsonObject = Json.parseToJsonElement(jsonString).jsonObject
-                    val accesoValue = jsonObject["acceso"]?.jsonPrimitive?.content
-                    val mensajeValue = jsonObject["mensaje"]?.jsonPrimitive?.content
+                    val jsonElement = Json { ignoreUnknownKeys = true }.parseToJsonElement(resultJson)
+                    val jsonObject = jsonElement.jsonObject
+                    
+                    val accesoValue = jsonObject["acceso"]?.jsonPrimitive?.content ?: ""
+                    val mensajeValue = jsonObject["estatus"]?.jsonPrimitive?.content
                     
                     Log.d("SNRepository", "Valor de 'acceso': $accesoValue")
-                    
-                    if (accesoValue == null) {
+
+                    if (accesoValue.isBlank()) {
                         Log.e("SNRepository", "Campo 'acceso' ausente en respuesta de autenticación")
                         throw IllegalStateException("Respuesta de autenticación inválida")
                     }
@@ -187,7 +176,6 @@ class NetworkSNRepository(
         var sinAdeudos = ""
         var operaciones = mutableListOf<String>()
         var estadoScraped = ""
-        var statusMatriculaScraped = ""
 
         // 1. Obtener datos via SOAP (getAlumnoAcademicoWithLineamiento)
         try {
@@ -244,12 +232,13 @@ class NetworkSNRepository(
                                 nombre = clean(nombre),
                                 carrera = clean(carrera),
                                 especialidad = clean(especialidad),
-                                semestre = semestre,
+                                semestre = semestre.toIntOrNull() ?: 0,
                                 promedio = promedio,
                                 estado = if (estadoScraped.isEmpty()) "INSCRITO" else clean(estadoScraped),
                                 statusMatricula = if (sinAdeudos.isNotEmpty()) clean(sinAdeudos) else "SIN ADEUDOS",
-                                cdtsReunidos = cdtAc,
-                                cdtsActuales = cdtAct,
+                                cdtsReunidos = cdtAc.toIntOrNull() ?: 0,
+                                cdtsActuales = cdtAct.toIntOrNull() ?: 0,
+                                semActual = semestre.toIntOrNull() ?: 0,
                                 inscrito = inscritoStr,
                                 reinscripcionFecha = fReins,
                                 estatusAlumno = estatusAlu,
@@ -287,12 +276,13 @@ class NetworkSNRepository(
                                     nombre = clean(nombre),
                                     carrera = clean(carrera),
                                     especialidad = clean(especialidad),
-                                    semestre = semestre,
+                                    semestre = semestre.toIntOrNull() ?: 0,
                                     promedio = promedio,
                                     estado = if (estadoScraped.isEmpty()) "INSCRITO" else clean(estadoScraped),
                                     statusMatricula = if (sinAdeudos.isNotEmpty()) clean(sinAdeudos) else "SIN ADEUDOS",
-                                    cdtsReunidos = cdtAc,
-                                    cdtsActuales = cdtAct,
+                                    cdtsReunidos = cdtAc.toIntOrNull() ?: 0,
+                                    cdtsActuales = cdtAct.toIntOrNull() ?: 0,
+                                    semActual = semestre.toIntOrNull() ?: 0,
                                     inscrito = inscritoStr,
                                     reinscripcionFecha = fReins,
                                     estatusAlumno = estatusAlu,
@@ -314,19 +304,19 @@ class NetworkSNRepository(
             Log.e("SNRepository", "❌ Error en SOAP de Perfil: ${e.message}")
         }
 
-        // ... (Scraping fallback if SOAP failed return) ...
         // Re-calculate ProfileStudent if it wasn't returned yet
         return ProfileStudent(
             matricula = matricula,
             nombre = clean(nombre),
             carrera = clean(carrera),
             especialidad = clean(especialidad),
-            semestre = semestre,
+            semestre = semestre.toIntOrNull() ?: 0,
             promedio = promedio,
             estado = if (estadoScraped.isEmpty()) "INSCRITO" else clean(estadoScraped),
             statusMatricula = if (sinAdeudos.isNotEmpty()) clean(sinAdeudos) else "SIN ADEUDOS",
-            cdtsReunidos = cdtAc,
-            cdtsActuales = cdtAct,
+            cdtsReunidos = cdtAc.toIntOrNull() ?: 0,
+            cdtsActuales = cdtAct.toIntOrNull() ?: 0,
+            semActual = semestre.toIntOrNull() ?: 0,
             inscrito = inscritoStr,
             reinscripcionFecha = fReins,
             estatusAlumno = estatusAlu,
@@ -372,17 +362,12 @@ class NetworkSNRepository(
     }
 
     private fun extractResult(xml: String, tag: String): String? {
-        try {
-            // Regex to match <tag ...>content</tag> or <tag>content</tag>
-            // Handles potential namespaces or attributes
-            val regex = Regex("<$tag.*?>(.*?)</$tag>", RegexOption.DOT_MATCHES_ALL)
-            val match = regex.find(xml)
-            if (match != null) {
-                val content = match.groupValues[1]
-                return unescapeXml(content)
-            }
-        } catch (e: Exception) {
-            Log.e("SNRepository", "Error extracting result for tag $tag", e)
+        val startTag = "<$tag>"
+        val endTag = "</$tag>"
+        val start = xml.indexOf(startTag)
+        val end = xml.indexOf(endTag)
+        if (start != -1 && end != -1) {
+            return xml.substring(start + startTag.length, end)
         }
         return null
     }
@@ -393,20 +378,17 @@ class NetworkSNRepository(
             val soapBody = bodyKardex.format(lineamiento)
             val response = snApiService.kardexSoap(soapBody.toRequestBody("text/xml; charset=utf-8".toMediaType()))
             val xmlString = response.string()
-            val result = extractResult(xmlString, "getAllKardexConPromedioByAlumnoResult")
             
-            if (!result.isNullOrBlank()) {
-                Log.d("SNRepository", "Kardex JSON Raw: $result")
-                 try {
-                    return Json { ignoreUnknownKeys = true }.decodeFromString<List<MateriaKardex>>(result)
-                } catch (e: Exception) {
-                    Log.e("SNRepository", "Error parsing Kardex JSON", e)
-                }
-            } else {
-                Log.e("SNRepository", "Kardex result is null or blank")
+            val result = extractResult(xmlString, "getAllKardexConPromedioByAlumnoResult")
+            if (result != null) {
+                Log.d("SNRepository", "Kardex JSON Raw: ${result.take(500)}...")
+                // El SICEnet devuelve un objeto con "lstKardex" y "Promedio"
+                val json = Json { ignoreUnknownKeys = true }
+                val responseObj = json.decodeFromString<KardexResponse>(result)
+                return responseObj.lstKardex
             }
         } catch (e: Exception) {
-            Log.e("SNRepository", "Error fetching Kardex", e)
+            Log.e("SNRepository", "Error parsing Kardex JSON (Ask Gemini)", e)
         }
         return emptyList()
     }
@@ -417,60 +399,14 @@ class NetworkSNRepository(
             val soapBody = bodyCarga
             val response = snApiService.cargaSoap(soapBody.toRequestBody("text/xml; charset=utf-8".toMediaType()))
             val xmlString = response.string()
+            
             val result = extractResult(xmlString, "getCargaAcademicaByAlumnoResult")
-            
-            if (!result.isNullOrBlank()) {
+            if (result != null) {
                 Log.d("SNRepository", "Carga JSON Raw: $result")
-                 try {
-                    return Json { ignoreUnknownKeys = true }.decodeFromString<List<MateriaCarga>>(result)
-                } catch (e: Exception) {
-                    Log.e("SNRepository", "Error parsing Carga JSON", e)
-                }
-            } else {
-                Log.e("SNRepository", "Carga result is null or blank")
+                return Json { ignoreUnknownKeys = true }.decodeFromString<List<MateriaCarga>>(result)
             }
         } catch (e: Exception) {
-            Log.e("SNRepository", "Error fetching Carga", e)
-        }
-        return emptyList()
-    }
-
-    override suspend fun getCalifUnidades(matricula: String): List<MateriaParcial> {
-        try {
-            Log.d("SNRepository", "Solicitando Parciales SOAP...")
-            val soapBody = bodyParciales
-            val response = snApiService.parcialesSoap(soapBody.toRequestBody("text/xml; charset=utf-8".toMediaType()))
-            val xmlString = response.string()
-            val result = extractResult(xmlString, "getCalifUnidadesByAlumnoResult")
-            
-            if (!result.isNullOrBlank()) {
-                Log.d("SNRepository", "Parciales JSON Raw: $result")
-                 try {
-                    val jsonArray = Json.parseToJsonElement(result).jsonArray
-                    val list = mutableListOf<MateriaParcial>()
-                    jsonArray.forEach { element ->
-                        val obj = element.jsonObject
-                        val materia = obj["materia"]?.jsonPrimitive?.content ?: ""
-                        val parciales = mutableListOf<String>()
-                        for (i in 1..10) {
-                            val p = obj["p$i"]?.jsonPrimitive?.content
-                            if (!p.isNullOrEmpty()) {
-                                parciales.add(p)
-                            }
-                        }
-                        if (materia.isNotEmpty()) {
-                            list.add(MateriaParcial(materia, parciales))
-                        }
-                    }
-                    return list
-                } catch (e: Exception) {
-                    Log.e("SNRepository", "Error parsing Parciales JSON", e)
-                }
-            } else {
-                Log.e("SNRepository", "Parciales result is null or blank")
-            }
-        } catch (e: Exception) {
-            Log.e("SNRepository", "Error fetching Parciales", e)
+            Log.e("SNRepository", "Error parsing Carga JSON", e)
         }
         return emptyList()
     }
@@ -481,23 +417,33 @@ class NetworkSNRepository(
             val soapBody = bodyCalifFinal.format(modEducativo)
             val response = snApiService.finalSoap(soapBody.toRequestBody("text/xml; charset=utf-8".toMediaType()))
             val xmlString = response.string()
-            val result = extractResult(xmlString, "getAllCalifFinalByAlumnosResult")
             
-            if (!result.isNullOrBlank()) {
+            val result = extractResult(xmlString, "getAllCalifFinalByAlumnosResult")
+            if (result != null) {
                 Log.d("SNRepository", "CalifFinal JSON Raw: $result")
-                 try {
-                    return Json { ignoreUnknownKeys = true }.decodeFromString<List<MateriaFinal>>(result)
-                } catch (e: Exception) {
-                    Log.e("SNRepository", "Error parsing CalifFinal JSON", e)
-                }
-            } else {
-                Log.e("SNRepository", "CalifFinal result is null or blank")
+                return Json { ignoreUnknownKeys = true }.decodeFromString<List<MateriaFinal>>(result)
             }
         } catch (e: Exception) {
-            Log.e("SNRepository", "Error fetching CalifFinal", e)
+            Log.e("SNRepository", "Error parsing CalifFinal JSON (Ask Gemini)", e)
+        }
+        return emptyList()
+    }
+
+    override suspend fun getCalifUnidades(matricula: String): List<MateriaParcial> {
+        try {
+            Log.d("SNRepository", "Solicitando Parciales SOAP...")
+            val soapBody = bodyCalifUnidades
+            val response = snApiService.parcialesSoap(soapBody.toRequestBody("text/xml; charset=utf-8".toMediaType()))
+            val xmlString = response.string()
+            
+            val result = extractResult(xmlString, "getCalifUnidadesByAlumnoResult")
+            if (result != null) {
+                Log.d("SNRepository", "Parciales JSON Raw: ${result.take(500)}...")
+                return Json { ignoreUnknownKeys = true }.decodeFromString<List<MateriaParcial>>(result)
+            }
+        } catch (e: Exception) {
+            Log.e("SNRepository", "Error parsing Parciales JSON", e)
         }
         return emptyList()
     }
 }
-
-// Importar MediaType para usar toMediaType()

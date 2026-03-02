@@ -325,7 +325,7 @@ fun FinalesList(finales: List<MateriaFinal>, modifier: Modifier = Modifier) {
                             style = MaterialTheme.typography.titleMedium
                         )
                         Text(
-                            text = materia.calif, 
+                            text = materia.calif.toString(), 
                             fontWeight = FontWeight.Bold, 
                             style = MaterialTheme.typography.headlineSmall,
                             color = MaterialTheme.colorScheme.primary

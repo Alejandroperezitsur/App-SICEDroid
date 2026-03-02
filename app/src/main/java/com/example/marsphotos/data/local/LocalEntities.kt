@@ -12,15 +12,15 @@ data class StudentEntity(
     val nombre: String,
     val apellidos: String,
     val carrera: String,
-    val semestre: String,
+    val semestre: Int,
     val promedio: String,
     val estado: String = "",
     val statusMatricula: String = "",
     val fotoUrl: String,
     val especialidad: String = "",
-    val cdtsReunidos: String = "",
-    val cdtsActuales: String = "",
-    val semActual: String = "",
+    val cdtsReunidos: Int = 0,
+    val cdtsActuales: Int = 0,
+    val semActual: Int = 0,
     val inscrito: String = "",
     val estatusAcademico: String = "",
     val estatusAlumno: String = "",
@@ -40,7 +40,7 @@ data class KardexEntity(
     val matricula: String,
     val clave: String,
     val nombre: String,
-    val calificacion: String,
+    val calificacion: Int,
     val acreditacion: String,
     val periodo: String,
     val lastUpdate: Long = System.currentTimeMillis()
@@ -55,7 +55,7 @@ data class CargaEntity(
     val nombre: String,
     val docente: String,
     val grupo: String,
-    val creditos: String,
+    val creditos: Int,
     val lunes: String,
     val martes: String,
     val miercoles: String,
@@ -83,7 +83,7 @@ data class CalifUnidadEntity(
 data class CalifFinalEntity(
     val matricula: String,
     val materia: String,
-    val calif: String,
+    val calif: Int,
     val lastUpdate: Long = System.currentTimeMillis()
 )
 

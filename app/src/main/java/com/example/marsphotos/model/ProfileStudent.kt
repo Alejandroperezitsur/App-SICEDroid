@@ -1,8 +1,6 @@
 package com.example.marsphotos.model
 
 import kotlinx.serialization.Serializable
-import org.simpleframework.xml.Element
-import org.simpleframework.xml.Root
 
 @Serializable
 data class ProfileStudent(
@@ -10,16 +8,16 @@ data class ProfileStudent(
     val nombre: String = "",
     val apellidos: String = "",
     val carrera: String = "",
-    val semestre: String = "",
+    val semestre: Int = 0,
     val promedio: String = "",
     val estado: String = "",
     val statusMatricula: String = "",
     // Campos adicionales obtenidos desde la página HTML
     val fotoUrl: String = "",
     val especialidad: String = "",
-    val cdtsReunidos: String = "",
-    val cdtsActuales: String = "",
-    val semActual: String = "",
+    val cdtsReunidos: Int = 0,
+    val cdtsActuales: Int = 0,
+    val semActual: Int = 0,
     val inscrito: String = "",
     val estatusAcademico: String = "",
     val estatusAlumno: String = "",
@@ -40,4 +38,3 @@ data class ProfileStudent(
     val cargaHtml: String = "",
     val califHtml: String = ""
 )
-// (El parsing del DataSet XML se encuentra en ResponseAcceso.kt)

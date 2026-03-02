@@ -48,9 +48,6 @@ import com.example.marsphotos.model.ProfileStudent
 import com.example.marsphotos.ui.theme.SICENETTheme
 import coil.compose.AsyncImage
 
-/**
- * Pantalla que muestra el perfil académico del estudiante
- */
 @Composable
 fun ProfileScreen(
     profileUiState: ProfileUiState,
@@ -63,7 +60,6 @@ fun ProfileScreen(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        // Top AppBar
         @OptIn(ExperimentalMaterial3Api::class)
         TopAppBar(
             title = { Text(stringResource(id = com.example.marsphotos.R.string.profile_screen_title)) },
@@ -77,7 +73,6 @@ fun ProfileScreen(
             }
         )
 
-        // Contenido principal
         when (profileUiState) {
             is ProfileUiState.Loading -> {
                 LoadingProfileScreen(modifier = Modifier.fillMaxSize())
@@ -120,7 +115,6 @@ fun ProfileDetailScreen(
         modifier = modifier.verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Información Personal
         Card(
             modifier = Modifier.fillMaxWidth(),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
@@ -150,7 +144,6 @@ fun ProfileDetailScreen(
             }
         }
 
-        // Información Académica
         Card(
             modifier = Modifier.fillMaxWidth(),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
@@ -165,14 +158,14 @@ fun ProfileDetailScreen(
                 ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_carrera), value = profile.carrera)
                 ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_estatus_academico), value = profile.estatusAcademico)
                 ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_especialidad), value = profile.especialidad)
-                ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_semestre), value = profile.semestre)
+                ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_semestre), value = profile.semestre.toString())
                 ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_promedio), value = profile.promedio)
                 ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_estado), value = profile.estado)
                 ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_status_matricula), value = profile.statusMatricula)
                 ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_estatus_alumno), value = profile.estatusAlumno)
                 Divider()
-                ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_cdts_reunidos), value = profile.cdtsReunidos)
-                ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_cdts_actuales), value = profile.cdtsActuales)
+                ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_cdts_reunidos), value = profile.cdtsReunidos.toString())
+                ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_cdts_actuales), value = profile.cdtsActuales.toString())
                 ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_inscrito), value = profile.inscrito)
                 ProfileInfoRow(label = stringResource(id = com.example.marsphotos.R.string.profile_label_reinscripcion), value = profile.reinscripcionFecha)
                 
@@ -182,7 +175,6 @@ fun ProfileDetailScreen(
             }
         }
 
-        // Operaciones Académicas Interactiva
         if (profile.operaciones.isNotEmpty()) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -229,26 +221,15 @@ fun ProfileInfoRow(
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = label,
-            fontWeight = FontWeight.Bold,
-            fontSize = 14.sp
-        )
-        Text(
-            text = value,
-            fontSize = 14.sp
-        )
+        Text(text = label, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        Text(text = value, fontSize = 14.sp)
     }
 }
 
-/**
- * Pantalla de carga para el perfil
- */
 @Composable
 fun LoadingProfileScreen(modifier: Modifier = Modifier) {
     Column(
@@ -256,17 +237,12 @@ fun LoadingProfileScreen(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        CircularProgressIndicator(
-            modifier = Modifier.size(50.dp)
-        )
+        CircularProgressIndicator(modifier = Modifier.size(50.dp))
         Spacer(modifier = Modifier.height(16.dp))
         Text(stringResource(id = com.example.marsphotos.R.string.profile_loading))
     }
 }
 
-/**
- * Pantalla de error para el perfil
- */
 @Composable
 fun ProfileErrorScreen(
     error: String,
@@ -279,9 +255,7 @@ fun ProfileErrorScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
             shape = RoundedCornerShape(12.dp)
         ) {
@@ -290,23 +264,9 @@ fun ProfileErrorScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = stringResource(id = com.example.marsphotos.R.string.login_error_title),
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Text(
-                    text = error,
-                    modifier = Modifier.padding(16.dp)
-                )
-
-                Button(
-                    onClick = onRetryClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                ) {
+                Text(text = stringResource(id = com.example.marsphotos.R.string.login_error_title), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text(text = error, modifier = Modifier.padding(16.dp))
+                Button(onClick = onRetryClick, modifier = Modifier.fillMaxWidth().height(48.dp)) {
                     Text(stringResource(id = com.example.marsphotos.R.string.profile_error_back))
                 }
             }
@@ -324,7 +284,7 @@ fun ProfileDetailScreenPreview() {
                 nombre = "Juan",
                 apellidos = "Pérez García",
                 carrera = "Ingeniería en Sistemas Computacionales",
-                semestre = "6",
+                semestre = 6,
                 promedio = "8.5",
                 estado = "Activo",
                 statusMatricula = "Vigente"

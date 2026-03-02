@@ -111,6 +111,11 @@ class LoginViewModel(
             ).then(storeRequest).enqueue()
 
             workManager.getWorkInfoByIdFlow(fetchRequest.id).collect { workInfo ->
+                // Verificar que workInfo no sea null
+                if (workInfo == null) {
+                    loginUiState = LoginUiState.Loading
+                    return@collect
+                }
                 when (workInfo.state) {
                     WorkInfo.State.ENQUEUED, WorkInfo.State.RUNNING -> {
                         loginUiState = LoginUiState.Loading

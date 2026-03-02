@@ -5,25 +5,38 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class MateriaKardex(
-    val clave: String = "",
-    @SerialName("materia") val nombre: String = "",
-    @SerialName("calif") val calificacion: String = "",
-    val acreditacion: String = "",
-    val periodo: String = ""
+    @SerialName("ClvOfiMat") val clave: String = "",
+    @SerialName("Materia") val nombre: String = "",
+    @SerialName("Calif") val calificacion: Int = 0,
+    @SerialName("Acred") val acreditacion: String = "",
+    @SerialName("P1") val periodo: String = ""
+)
+
+@Serializable
+data class KardexResponse(
+    val lstKardex: List<MateriaKardex> = emptyList(),
+    val Promedio: PromedioKardex? = null
+)
+
+@Serializable
+data class PromedioKardex(
+    val PromedioGral: Double = 0.0,
+    val CdtsAcum: Int = 0,
+    val CdtsPlan: Int = 0
 )
 
 @Serializable
 data class MateriaCarga(
-    @SerialName("materia") val nombre: String = "",
-    val docente: String = "",
-    val grupo: String = "",
-    val creditos: String = "",
-    val lunes: String = "",
-    val martes: String = "",
-    val miercoles: String = "",
-    val jueves: String = "",
-    val viernes: String = "",
-    val sabado: String = ""
+    @SerialName("Materia") val nombre: String = "",
+    @SerialName("Docente") val docente: String = "",
+    @SerialName("Grupo") val grupo: String = "",
+    @SerialName("CreditosMateria") val creditos: Int = 0,
+    @SerialName("Lunes") val lunes: String = "",
+    @SerialName("Martes") val martes: String = "",
+    @SerialName("Miercoles") val miercoles: String = "",
+    @SerialName("Jueves") val jueves: String = "",
+    @SerialName("Viernes") val viernes: String = "",
+    @SerialName("Sabado") val sabado: String = ""
 )
 
 @Serializable
@@ -35,7 +48,9 @@ data class MateriaParcial(
 @Serializable
 data class MateriaFinal(
     val materia: String = "",
-    val calif: String = ""
+    val calif: Int = 0,
+    @SerialName("acred") val acreditacion: String = "",
+    @SerialName("grupo") val grupo: String = ""
 )
 
 @Serializable
