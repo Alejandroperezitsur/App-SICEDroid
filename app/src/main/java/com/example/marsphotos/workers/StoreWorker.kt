@@ -15,6 +15,7 @@ import com.example.marsphotos.model.MateriaFinal
 import com.example.marsphotos.model.MateriaKardex
 import com.example.marsphotos.model.MateriaParcial
 import com.example.marsphotos.model.ProfileStudent
+import com.example.marsphotos.notifications.NotificationHelper
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
@@ -30,6 +31,9 @@ class StoreWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx,
         val matricula = snRepository.getMatricula()
 
         if (matricula.isEmpty()) return Result.failure()
+
+        // Helper para notificaciones
+        val notificationHelper = NotificationHelper(applicationContext)
 
         return try {
             Log.d("StoreWorker", "Storing $feature for $matricula")
@@ -115,6 +119,10 @@ class StoreWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx,
                     }
                     Log.e("StoreWorker", "Finales recibidos: ${finales.size}")
 
+                    // Obtener calificaciones anteriores para comparar
+                    val oldParciales = localRepository.getCalifUnidadSync(matricula)
+                    val oldFinales = localRepository.getCalifFinalSync(matricula)
+
                     localRepository.updateCalifUnidad(matricula, parciales.map {
                         CalifUnidadEntity(
                             matricula = matricula,
@@ -134,6 +142,15 @@ class StoreWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx,
                         )
                     })
                     Log.e("StoreWorker", "✅ updateCalifFinal completado")
+
+                    // Verificar nuevas calificaciones y enviar notificaciones
+                    checkForNewGrades(
+                        oldParciales = oldParciales,
+                        newParciales = parciales,
+                        oldFinales = oldFinales,
+                        newFinales = finales,
+                        notificationHelper = notificationHelper
+                    )
                 }
             }
             Result.success()
@@ -141,5 +158,74 @@ class StoreWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx,
             Log.e("StoreWorker", "Error storing $feature", e)
             Result.failure()
         }
+    }
+
+    /**
+     * Compara calificaciones anteriores con nuevas para detectar cambios
+     */
+    private fun checkForNewGrades(
+        oldParciales: List<CalifUnidadEntity>,
+        newParciales: List<MateriaParcial>,
+        oldFinales: List<CalifFinalEntity>,
+        newFinales: List<MateriaFinal>,
+        notificationHelper: NotificationHelper
+    ) {
+        val newGradesCount = mutableListOf<String>()
+
+        // Verificar parciales nuevos
+        newParciales.forEach { newMateria ->
+            val oldMateria = oldParciales.find { it.materia == newMateria.materia }
+            
+            newMateria.parciales.forEachIndexed { index, newGrade ->
+                val oldGrade = oldMateria?.parciales?.getOrNull(index)
+                
+                // Si hay una nueva calificación (antes era 0 o vacío, ahora tiene valor)
+                if (hasNewGrade(oldGrade, newGrade)) {
+                    Log.d("StoreWorker", "Nueva calificación parcial detectada: ${newMateria.materia} - U${index + 1}: $newGrade")
+                    notificationHelper.showNewGradeNotification(
+                        materia = newMateria.materia,
+                        calificacion = newGrade,
+                        tipo = "Unidad ${index + 1}"
+                    )
+                    newGradesCount.add("${newMateria.materia} - U${index + 1}")
+                }
+            }
+        }
+
+        // Verificar finales nuevos
+        newFinales.forEach { newFinal ->
+            val oldFinal = oldFinales.find { it.materia == newFinal.materia }
+            
+            // Si hay una nueva calificación final
+            val oldCalifStr = oldFinal?.calif?.toString()
+            val newCalifStr = newFinal.calif.toString()
+            if (hasNewGrade(oldCalifStr, newCalifStr)) {
+                Log.d("StoreWorker", "Nueva calificación final detectada: ${newFinal.materia}: ${newFinal.calif}")
+                notificationHelper.showNewGradeNotification(
+                    materia = newFinal.materia,
+                    calificacion = newFinal.calif.toString(),
+                    tipo = "Final"
+                )
+                newGradesCount.add("${newFinal.materia} - Final")
+            }
+        }
+
+        // Si hubo múltiples cambios, mostrar resumen
+        if (newGradesCount.size > 1) {
+            notificationHelper.showGradesUpdatedNotification(newGradesCount.size)
+        }
+
+        Log.d("StoreWorker", "Total nuevas calificaciones detectadas: ${newGradesCount.size}")
+    }
+
+    /**
+     * Determina si hay una nueva calificación comparando valores
+     */
+    private fun hasNewGrade(oldGrade: String?, newGrade: String): Boolean {
+        // Si no había calificación antes y ahora sí
+        if (oldGrade.isNullOrEmpty() || oldGrade == "0" || oldGrade == "-") {
+            return newGrade.isNotEmpty() && newGrade != "0" && newGrade != "-"
+        }
+        return false
     }
 }

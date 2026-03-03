@@ -41,6 +41,7 @@ interface AppContainer {
     val marsPhotosRepository: MarsPhotosRepository
     val snRepository: SNRepository
     val localRepository: LocalRepository
+    val sessionManager: SessionManager
 }
 
 /**
@@ -113,13 +114,17 @@ class DefaultAppContainer(applicationContext: Context) : AppContainer {
         NetworkMarsPhotosRepository(retrofitService)
     }
     /**
-     * DI implementation for Mars photos repository
+     * DI implementation for SNRepository with SessionManager
      */
     override val snRepository: SNRepository by lazy {
-        NetworkSNRepository(retrofitServiceSN)
+        NetworkSNRepository(retrofitServiceSN, sessionManager)
     }
 
     override val localRepository: LocalRepository by lazy {
         LocalRepositoryImpl(AppDatabase.getDatabase(applicationContext).studentDao())
+    }
+
+    override val sessionManager: SessionManager by lazy {
+        SessionManager(applicationContext)
     }
 }

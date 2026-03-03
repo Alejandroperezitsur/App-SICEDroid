@@ -22,11 +22,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
@@ -34,7 +39,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.marsphotos.MarsPhotosApplication
+import com.example.marsphotos.data.SessionManager
 import com.example.marsphotos.ui.screens.AcademicViewModel
 import com.example.marsphotos.ui.screens.CargaScreen
 import com.example.marsphotos.ui.screens.GradesScreen
@@ -46,12 +54,20 @@ import com.example.marsphotos.ui.screens.ProfileViewModel
 
 /**
  * Aplicación principal con navegación entre Login y Profile
+ * Ahora con persistencia de sesión - si hay sesión guardada, va directo al perfil
  */
 @Composable
 fun MarsPhotosApp() {
+    val context = LocalContext.current
+    val sessionManager = remember { (context.applicationContext as MarsPhotosApplication).container.sessionManager }
+    
+    // Verificar si hay sesión guardada al inicio
+    val hasSavedSession = remember { sessionManager.isLoggedIn() }
+    val savedMatricula = remember { sessionManager.getMatricula() }
+    
     // Estado para controlar la navegación
-    var currentScreen by remember { mutableStateOf(AppScreen.LOGIN) }
-    var userMatricula by remember { mutableStateOf("") }
+    var currentScreen by remember { mutableStateOf(if (hasSavedSession) AppScreen.PROFILE else AppScreen.LOGIN) }
+    var userMatricula by remember { mutableStateOf(if (hasSavedSession) savedMatricula else "") }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -60,6 +76,17 @@ fun MarsPhotosApp() {
         when (currentScreen) {
             AppScreen.LOGIN -> {
                 val loginViewModel: LoginViewModel = viewModel(factory = LoginViewModel.Factory)
+                
+                // Si hay sesión guardada, actualizar el ViewModel con las credenciales
+                LaunchedEffect(Unit) {
+                    if (hasSavedSession) {
+                        val credentials = sessionManager.getCredentials()
+                        credentials?.let { (mat, pass) ->
+                            loginViewModel.updateMatricula(mat)
+                            loginViewModel.updateContrasenia(pass)
+                        }
+                    }
+                }
                 
                 LoginScreen(
                     loginUiState = loginViewModel.loginUiState,
@@ -89,7 +116,9 @@ fun MarsPhotosApp() {
                 
                 ProfileScreen(
                     profileUiState = profileViewModel.profileUiState,
-                    onBackClick = {
+                    onLogoutClick = {
+                        // Cerrar sesión y limpiar datos
+                        sessionManager.clearSession()
                         currentScreen = AppScreen.LOGIN
                         userMatricula = ""
                     },
@@ -103,16 +132,25 @@ fun MarsPhotosApp() {
                 val academicViewModel: AcademicViewModel = viewModel(factory = AcademicViewModel.Factory)
                 Scaffold(
                     topBar = {
-                        androidx.compose.material3.TopAppBar(
-                            title = { Text(text = androidx.compose.ui.res.stringResource(id = com.example.marsphotos.R.string.kardex_title)) },
+                        TopAppBar(
+                            title = { 
+                                Text(
+                                    text = androidx.compose.ui.res.stringResource(id = com.example.marsphotos.R.string.kardex_title),
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                ) 
+                            },
                             navigationIcon = {
-                                androidx.compose.material3.IconButton(onClick = { currentScreen = AppScreen.PROFILE }) {
-                                    androidx.compose.material3.Icon(
+                                IconButton(onClick = { currentScreen = AppScreen.PROFILE }) {
+                                    Icon(
                                         imageVector = Icons.Filled.ArrowBack,
-                                        contentDescription = null
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimary
                                     )
                                 }
-                            }
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
                         )
                     }
                 ) { innerPadding ->
@@ -127,16 +165,25 @@ fun MarsPhotosApp() {
                 val academicViewModel: AcademicViewModel = viewModel(factory = AcademicViewModel.Factory)
                 Scaffold(
                     topBar = {
-                        androidx.compose.material3.TopAppBar(
-                            title = { Text(text = androidx.compose.ui.res.stringResource(id = com.example.marsphotos.R.string.carga_title)) },
+                        TopAppBar(
+                            title = { 
+                                Text(
+                                    text = androidx.compose.ui.res.stringResource(id = com.example.marsphotos.R.string.carga_title),
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                ) 
+                            },
                             navigationIcon = {
-                                androidx.compose.material3.IconButton(onClick = { currentScreen = AppScreen.PROFILE }) {
-                                    androidx.compose.material3.Icon(
+                                IconButton(onClick = { currentScreen = AppScreen.PROFILE }) {
+                                    Icon(
                                         imageVector = Icons.Filled.ArrowBack,
-                                        contentDescription = null
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimary
                                     )
                                 }
-                            }
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
                         )
                     }
                 ) { innerPadding ->
@@ -151,16 +198,25 @@ fun MarsPhotosApp() {
                 val academicViewModel: AcademicViewModel = viewModel(factory = AcademicViewModel.Factory)
                 Scaffold(
                     topBar = {
-                        androidx.compose.material3.TopAppBar(
-                            title = { Text(text = androidx.compose.ui.res.stringResource(id = com.example.marsphotos.R.string.grades_title)) },
+                        TopAppBar(
+                            title = { 
+                                Text(
+                                    text = androidx.compose.ui.res.stringResource(id = com.example.marsphotos.R.string.grades_title),
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                ) 
+                            },
                             navigationIcon = {
-                                androidx.compose.material3.IconButton(onClick = { currentScreen = AppScreen.PROFILE }) {
-                                    androidx.compose.material3.Icon(
+                                IconButton(onClick = { currentScreen = AppScreen.PROFILE }) {
+                                    Icon(
                                         imageVector = Icons.Filled.ArrowBack,
-                                        contentDescription = null
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimary
                                     )
                                 }
-                            }
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
                         )
                     }
                 ) { innerPadding ->

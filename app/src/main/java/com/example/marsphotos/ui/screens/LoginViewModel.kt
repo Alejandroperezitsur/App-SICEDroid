@@ -22,6 +22,7 @@ import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.example.marsphotos.MarsPhotosApplication
 import com.example.marsphotos.data.SNRepository
+import com.example.marsphotos.data.SessionManager
 import com.example.marsphotos.workers.LoginFetchWorker
 import com.example.marsphotos.workers.LoginStoreWorker
 import kotlinx.coroutines.Dispatchers
@@ -42,6 +43,7 @@ sealed interface LoginUiState {
  */
 class LoginViewModel(
     private val snRepository: SNRepository,
+    private val sessionManager: SessionManager,
     private val application: MarsPhotosApplication
 ) : ViewModel() {
 
@@ -121,6 +123,8 @@ class LoginViewModel(
                         loginUiState = LoginUiState.Loading
                     }
                     WorkInfo.State.SUCCEEDED -> {
+                        // ✅ Guardar sesión en SessionManager para persistencia
+                        sessionManager.saveSession(matricula, contrasenia)
                         loginUiState = LoginUiState.Success(matricula)
                     }
                     WorkInfo.State.FAILED -> {
@@ -163,8 +167,10 @@ class LoginViewModel(
             initializer {
                 val application = (this[APPLICATION_KEY] as MarsPhotosApplication)
                 val snRepository = application.container.snRepository
+                val sessionManager = application.container.sessionManager
                 LoginViewModel(
                     snRepository = snRepository,
+                    sessionManager = sessionManager,
                     application = application
                 )
             }

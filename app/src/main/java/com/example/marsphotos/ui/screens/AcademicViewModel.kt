@@ -34,7 +34,7 @@ import kotlinx.coroutines.withContext
 
 sealed interface AcademicUiState<out T> {
     object Loading : AcademicUiState<Nothing>
-    data class Success<T>(val data: T, val lastUpdate: Long = 0) : AcademicUiState<T>
+    data class Success<T>(val data: T, val lastUpdate: Long = 0, val isOffline: Boolean = false) : AcademicUiState<T>
     data class Error(val message: String) : AcademicUiState<Nothing>
 }
 
@@ -92,8 +92,6 @@ class AcademicViewModel(
 
         viewModelScope.launch {
             workManager.getWorkInfosForUniqueWorkFlow(workName).collect { workInfos ->
-                // Determinismo absoluto: Solo nos importa el estado del StoreWorker (el último del chain)
-                // de la ejecución actual.
                 val finalWorker = workInfos.find { it.tags.contains(finalWorkerTag) }
                 
                 if (finalWorker != null) {
@@ -111,7 +109,7 @@ class AcademicViewModel(
                             onWorkerFailed("Sincronización cancelada")
                         }
                         WorkInfo.State.RUNNING, WorkInfo.State.ENQUEUED, WorkInfo.State.BLOCKED -> {
-                            // En proceso o esperando reintento. Mantenemos estado actual.
+                            // En proceso, mantenemos estado actual
                         }
                     }
                 }
@@ -122,54 +120,48 @@ class AcademicViewModel(
     fun loadKardex(forceRefresh: Boolean = false) {
         viewModelScope.launch {
             val currentState = _kardexState.value
-            val isAlreadySyncing = isSyncing("KARDEX")
-
-            // Evitar re-sincronización si ya hay una en curso o si ya hay datos y no se fuerza refresh
-            if (!forceRefresh && (currentState is AcademicUiState.Success || isAlreadySyncing)) {
-                if (currentState is AcademicUiState.Loading) {
-                    // Si estamos en Loading pero hay sync en curso, simplemente esperamos a que termine el collector
-                    return@launch
-                }
-                if (currentState is AcademicUiState.Success) {
-                    return@launch
-                }
-            }
-
+            
+            // Si ya tenemos datos y no se fuerza refresh, no recargar
+            if (!forceRefresh && currentState is AcademicUiState.Success) return@launch
+            
             _kardexState.value = AcademicUiState.Loading
             val matricula = snRepository.getMatricula()
             
-            // First load from local
-            loadKardexFromLocal(matricula, isInitialLoad = true)
-
-            // If online, trigger sync
-            if (isOnline() && matricula.isNotEmpty()) {
+            android.util.Log.d("AcademicVM", "loadKardex() - matrícula obtenida: '$matricula'")
+            android.util.Log.d("AcademicVM", "isOnline(): ${isOnline()}")
+            
+            if (matricula.isEmpty()) {
+                android.util.Log.e("AcademicVM", "Matrícula vacía - no se puede cargar kardex")
+                _kardexState.value = AcademicUiState.Error("Matrícula no encontrada. Inicia sesión nuevamente.")
+                return@launch
+            }
+            
+            // Cargar desde local PRIMERO
+            val hasLocalData = loadKardexFromLocal(matricula)
+            
+            // Si hay internet, sincronizar en segundo plano
+            if (isOnline()) {
                 scheduleSync(
                     feature = "KARDEX", 
                     onWorkerFinished = {
-                        viewModelScope.launch { loadKardexFromLocal(matricula, isInitialLoad = false) }
+                        viewModelScope.launch { loadKardexFromLocal(matricula, isSync = true) }
                     },
                     onWorkerFailed = { msg ->
-                        if (_kardexState.value is AcademicUiState.Loading) {
+                        // Solo mostrar error si no tenemos datos locales
+                        if (_kardexState.value !is AcademicUiState.Success) {
                             _kardexState.value = AcademicUiState.Error(msg)
                         }
                     }
                 )
-            } else if (matricula.isEmpty()) {
-                _kardexState.value = AcademicUiState.Error("Matrícula no encontrada")
+            } else if (!hasLocalData) {
+                // No hay internet y no hay datos locales
+                _kardexState.value = AcademicUiState.Error("Sin conexión y sin datos guardados. Conéctate a internet para cargar tus datos.")
             }
         }
     }
 
-    private fun isSyncing(feature: String): Boolean {
-        // Esta es una aproximación. En una app real, podríamos guardar los ids de los Jobs o el estado de WorkManager
-        // Para este blindaje, usaremos el estado del UniqueWork de forma síncrona si fuera posible,
-        // pero como es asíncrono, confiaremos en el estado de la UI y en que beginUniqueWork con REPLACE
-        // maneja la exclusión mutua. El objetivo aquí es evitar el flicker de Loading.
-        return false 
-    }
-
-    private suspend fun loadKardexFromLocal(matricula: String, isInitialLoad: Boolean = false) {
-        withContext(Dispatchers.IO) {
+    private suspend fun loadKardexFromLocal(matricula: String, isSync: Boolean = false): Boolean {
+        return withContext(Dispatchers.IO) {
             try {
                 val localKardex = localRepository.getKardexSync(matricula)
                 val list = localKardex.map { entity ->
@@ -183,19 +175,16 @@ class AcademicViewModel(
                 }
                 
                 if (list.isNotEmpty()) {
-                    _kardexState.value = AcademicUiState.Success(list, localKardex.firstOrNull()?.lastUpdate ?: 0)
-                } else if (isInitialLoad) {
-                    // Si es carga inicial y está vacío, solo marcamos error si estamos offline
-                    if (!isOnline()) {
-                        _kardexState.value = AcademicUiState.Error("Offline: No hay datos guardados")
-                    }
+                    val lastUpdate = localKardex.firstOrNull()?.lastUpdate ?: 0
+                    val isOffline = !isOnline()
+                    _kardexState.value = AcademicUiState.Success(list, lastUpdate, isOffline)
+                    true
                 } else {
-                    // Si llegamos aquí después de una sincronización exitosa (isInitialLoad = false)
-                    // y la lista sigue vacía, es un éxito vacío legítimo.
-                    _kardexState.value = AcademicUiState.Success(emptyList(), System.currentTimeMillis())
+                    false
                 }
             } catch (e: Exception) {
-                _kardexState.value = AcademicUiState.Error("Error local: ${e.message}")
+                android.util.Log.e("AcademicVM", "Error cargando kardex local: ${e.message}")
+                false
             }
         }
     }
@@ -208,26 +197,35 @@ class AcademicViewModel(
             _cargaState.value = AcademicUiState.Loading
             val matricula = snRepository.getMatricula()
             
-            loadCargaFromLocal(matricula, isInitialLoad = true)
-
-            if (isOnline() && matricula.isNotEmpty()) {
+            if (matricula.isEmpty()) {
+                _cargaState.value = AcademicUiState.Error("Matrícula no encontrada")
+                return@launch
+            }
+            
+            // Cargar desde local PRIMERO
+            val hasLocalData = loadCargaFromLocal(matricula)
+            
+            // Si hay internet, sincronizar en segundo plano
+            if (isOnline()) {
                 scheduleSync(
                     feature = "CARGA",
                     onWorkerFinished = {
-                        viewModelScope.launch { loadCargaFromLocal(matricula, isInitialLoad = false) }
+                        viewModelScope.launch { loadCargaFromLocal(matricula, isSync = true) }
                     },
                     onWorkerFailed = { msg ->
-                        if (_cargaState.value is AcademicUiState.Loading) {
+                        if (_cargaState.value !is AcademicUiState.Success) {
                             _cargaState.value = AcademicUiState.Error(msg)
                         }
                     }
                 )
+            } else if (!hasLocalData) {
+                _cargaState.value = AcademicUiState.Error("Sin conexión y sin datos guardados. Conéctate a internet para cargar tus datos.")
             }
         }
     }
 
-    private suspend fun loadCargaFromLocal(matricula: String, isInitialLoad: Boolean = false) {
-        withContext(Dispatchers.IO) {
+    private suspend fun loadCargaFromLocal(matricula: String, isSync: Boolean = false): Boolean {
+        return withContext(Dispatchers.IO) {
             try {
                 val localCarga = localRepository.getCargaSync(matricula)
                 val list = localCarga.map { entity ->
@@ -246,16 +244,16 @@ class AcademicViewModel(
                 }
                 
                 if (list.isNotEmpty()) {
-                    _cargaState.value = AcademicUiState.Success(list, localCarga.firstOrNull()?.lastUpdate ?: 0)
-                } else if (isInitialLoad) {
-                    if (!isOnline()) {
-                        _cargaState.value = AcademicUiState.Error("Offline: No hay datos guardados")
-                    }
+                    val lastUpdate = localCarga.firstOrNull()?.lastUpdate ?: 0
+                    val isOffline = !isOnline()
+                    _cargaState.value = AcademicUiState.Success(list, lastUpdate, isOffline)
+                    true
                 } else {
-                    _cargaState.value = AcademicUiState.Success(emptyList(), System.currentTimeMillis())
+                    false
                 }
             } catch (e: Exception) {
-                _cargaState.value = AcademicUiState.Error("Error local: ${e.message}")
+                android.util.Log.e("AcademicVM", "Error cargando carga local: ${e.message}")
+                false
             }
         }
     }
@@ -270,44 +268,44 @@ class AcademicViewModel(
             _finalesState.value = AcademicUiState.Loading
             val matricula = snRepository.getMatricula()
             
-            loadGradesFromLocal(matricula, isInitialLoad = true)
-
-            if (isOnline() && matricula.isNotEmpty()) {
+            if (matricula.isEmpty()) {
+                _parcialesState.value = AcademicUiState.Error("Matrícula no encontrada")
+                _finalesState.value = AcademicUiState.Error("Matrícula no encontrada")
+                return@launch
+            }
+            
+            // Cargar desde local PRIMERO
+            val hasLocalData = loadGradesFromLocal(matricula)
+            
+            // Si hay internet, sincronizar en segundo plano
+            if (isOnline()) {
                 scheduleSync(
                     feature = "GRADES",
                     onWorkerFinished = {
-                        viewModelScope.launch { loadGradesFromLocal(matricula, isInitialLoad = false) }
+                        viewModelScope.launch { loadGradesFromLocal(matricula, isSync = true) }
                     },
                     onWorkerFailed = { msg ->
-                        if (_parcialesState.value is AcademicUiState.Loading) {
+                        if (_parcialesState.value !is AcademicUiState.Success) {
                             _parcialesState.value = AcademicUiState.Error(msg)
                         }
-                        if (_finalesState.value is AcademicUiState.Loading) {
+                        if (_finalesState.value !is AcademicUiState.Success) {
                             _finalesState.value = AcademicUiState.Error(msg)
                         }
                     }
                 )
+            } else if (!hasLocalData) {
+                val err = AcademicUiState.Error("Sin conexión y sin datos guardados. Conéctate a internet para cargar tus datos.")
+                _parcialesState.value = err
+                _finalesState.value = err
             }
         }
     }
 
-    private suspend fun loadGradesFromLocal(matricula: String, isInitialLoad: Boolean = false) {
-        withContext(Dispatchers.IO) {
+    private suspend fun loadGradesFromLocal(matricula: String, isSync: Boolean = false): Boolean {
+        return withContext(Dispatchers.IO) {
             try {
-                android.util.Log.e("AcademicVM", "=== loadGradesFromLocal ===")
-                android.util.Log.e("AcademicVM", "Matrícula: $matricula, isInitialLoad: $isInitialLoad")
-                
                 val localParciales = localRepository.getCalifUnidadSync(matricula)
                 val localFinales = localRepository.getCalifFinalSync(matricula)
-
-                android.util.Log.e("AcademicVM", "Parciales locales: ${localParciales.size} items")
-                android.util.Log.e("AcademicVM", "Finales locales: ${localFinales.size} items")
-                
-                if (localParciales.isNotEmpty()) {
-                    localParciales.forEachIndexed { index, entity ->
-                        android.util.Log.d("AcademicVM", "[$index] ${entity.materia}: ${entity.parciales}")
-                    }
-                }
 
                 if (localParciales.isNotEmpty() || localFinales.isNotEmpty()) {
                     val pList = localParciales.map { entity ->
@@ -317,27 +315,17 @@ class AcademicViewModel(
                         MateriaFinal(materia = entity.materia, calif = entity.calif)
                     }
                     
-                    android.util.Log.e("AcademicVM", "✅ pList: ${pList.size}, fList: ${fList.size}")
-                    
                     val lastUpdate = localParciales.firstOrNull()?.lastUpdate ?: localFinales.firstOrNull()?.lastUpdate ?: 0
-                    _parcialesState.value = AcademicUiState.Success(pList, lastUpdate)
-                    _finalesState.value = AcademicUiState.Success(fList, lastUpdate)
-                } else if (isInitialLoad) {
-                    if (!isOnline()) {
-                        val err = AcademicUiState.Error("Offline: No hay datos guardados")
-                        _parcialesState.value = err
-                        _finalesState.value = err
-                    }
+                    val isOffline = !isOnline()
+                    _parcialesState.value = AcademicUiState.Success(pList, lastUpdate, isOffline)
+                    _finalesState.value = AcademicUiState.Success(fList, lastUpdate, isOffline)
+                    true
                 } else {
-                    android.util.Log.e("AcademicVM", "⚠️ No hay datos locales, mostrando listas vacías")
-                    _parcialesState.value = AcademicUiState.Success(emptyList(), System.currentTimeMillis())
-                    _finalesState.value = AcademicUiState.Success(emptyList(), System.currentTimeMillis())
+                    false
                 }
             } catch (e: Exception) {
-                android.util.Log.e("AcademicVM", "❌ Error en loadGradesFromLocal: ${e.message}", e)
-                val err = AcademicUiState.Error("Error local: ${e.message}")
-                _parcialesState.value = err
-                _finalesState.value = err
+                android.util.Log.e("AcademicVM", "Error cargando grades local: ${e.message}")
+                false
             }
         }
     }

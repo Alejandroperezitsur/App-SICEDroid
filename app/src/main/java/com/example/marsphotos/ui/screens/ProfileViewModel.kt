@@ -34,12 +34,13 @@ import kotlinx.coroutines.withContext
  */
 sealed interface ProfileUiState {
     object Loading : ProfileUiState
-    data class Success(val profile: ProfileStudent, val lastUpdate: Long = 0) : ProfileUiState
+    data class Success(val profile: ProfileStudent, val lastUpdate: Long = 0, val isOffline: Boolean = false) : ProfileUiState
     data class Error(val message: String) : ProfileUiState
 }
 
 /**
  * ViewModel para mostrar el perfil académico del estudiante
+ * Optimizado para funcionar SIN INTERNET usando datos locales
  */
 class ProfileViewModel(
     private val snRepository: SNRepository,
@@ -87,11 +88,12 @@ class ProfileViewModel(
                 if (workInfo != null) {
                     when (workInfo.state) {
                         WorkInfo.State.SUCCEEDED -> {
-                            loadProfileFromLocal(matricula)
+                            loadProfileFromLocal(matricula, isSync = true)
                         }
                         WorkInfo.State.FAILED -> {
                             android.util.Log.e("ProfileVM", "Sync failed for PROFILE")
-                            if (profileUiState is ProfileUiState.Loading) {
+                            // Solo mostrar error si no tenemos datos locales
+                            if (profileUiState !is ProfileUiState.Success) {
                                 profileUiState = ProfileUiState.Error("Error al sincronizar perfil")
                             }
                         }
@@ -104,23 +106,35 @@ class ProfileViewModel(
 
     /**
      * Carga el perfil académico del estudiante
+     * SIEMPRE intenta cargar desde local primero para funcionar sin internet
      */
     fun loadProfile(matricula: String) {
         viewModelScope.launch {
             profileUiState = ProfileUiState.Loading
             
-            // First load from local
-            loadProfileFromLocal(matricula)
+            // Cargar desde local PRIMERO
+            val hasLocalData = loadProfileFromLocal(matricula)
 
-            // If online, trigger sync
+            // Si hay internet, sincronizar en segundo plano (no bloquea la UI)
             if (isOnline() && matricula.isNotEmpty()) {
                 scheduleSync(matricula)
+            } else if (!hasLocalData) {
+                // No hay internet y no hay datos locales guardados
+                profileUiState = ProfileUiState.Error(
+                    "Sin conexión a internet y no hay datos guardados. " +
+                    "Por favor conéctate a internet e inicia sesión para descargar tus datos."
+                )
             }
+            // Si hay datos locales, se mantienen mostrados (aunque sea offline)
         }
     }
 
-    private suspend fun loadProfileFromLocal(matricula: String) {
-        withContext(Dispatchers.IO) {
+    /**
+     * Carga el perfil desde la base de datos local (Room)
+     * Retorna true si encontró datos, false si no había nada
+     */
+    private suspend fun loadProfileFromLocal(matricula: String, isSync: Boolean = false): Boolean {
+        return withContext(Dispatchers.IO) {
             try {
                 val localStudent = localRepository.getStudentSync(matricula)
                 if (localStudent != null) {
@@ -147,12 +161,15 @@ class ProfileViewModel(
                         modEducativo = localStudent.modEducativo,
                         operaciones = localStudent.operaciones
                     )
-                    profileUiState = ProfileUiState.Success(profile, localStudent.lastUpdate)
-                } else if (!isOnline()) {
-                    profileUiState = ProfileUiState.Error("Offline: No hay datos guardados")
+                    val isOffline = !isOnline()
+                    profileUiState = ProfileUiState.Success(profile, localStudent.lastUpdate, isOffline)
+                    true
+                } else {
+                    false
                 }
             } catch (e: Exception) {
-                profileUiState = ProfileUiState.Error("Error: ${e.message}")
+                android.util.Log.e("ProfileVM", "Error cargando perfil local: ${e.message}")
+                false
             }
         }
     }

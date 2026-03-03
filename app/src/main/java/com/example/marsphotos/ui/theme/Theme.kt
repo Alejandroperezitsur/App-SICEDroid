@@ -26,28 +26,76 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Green80,
-    secondary = GreenGrey80,
-    tertiary = GreenAccent80
+// Esquema de colores claros moderno
+private val LightColorScheme = lightColorScheme(
+    primary = PrimaryLight,
+    onPrimary = OnPrimary,
+    primaryContainer = PrimaryContainer,
+    onPrimaryContainer = OnPrimaryContainer,
+    secondary = SecondaryLight,
+    onSecondary = OnSecondary,
+    secondaryContainer = SecondaryContainer,
+    onSecondaryContainer = OnSecondaryContainer,
+    tertiary = TertiaryLight,
+    onTertiary = OnTertiary,
+    tertiaryContainer = TertiaryContainer,
+    onTertiaryContainer = OnTertiaryContainer,
+    error = ErrorLight,
+    errorContainer = ErrorContainer,
+    onError = OnError,
+    onErrorContainer = OnErrorContainer,
+    background = BackgroundLight,
+    onBackground = OnBackground,
+    surface = SurfaceLight,
+    onSurface = OnSurface,
+    surfaceVariant = SurfaceVariant,
+    onSurfaceVariant = OnSurfaceVariant,
+    outline = OutlineLight,
+    outlineVariant = OutlineVariantLight,
+    scrim = Color(0xFF000000),
+    surfaceTint = PrimaryLight
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Green40,
-    secondary = GreenGrey40,
-    tertiary = GreenAccent40
+// Esquema de colores oscuros moderno
+private val DarkColorScheme = darkColorScheme(
+    primary = PrimaryDark,
+    onPrimary = OnPrimaryDark,
+    primaryContainer = PrimaryContainerDark,
+    onPrimaryContainer = OnPrimaryContainerDark,
+    secondary = SecondaryDark,
+    onSecondary = OnSecondaryDark,
+    secondaryContainer = SecondaryContainerDark,
+    onSecondaryContainer = OnSecondaryContainerDark,
+    tertiary = TertiaryDark,
+    onTertiary = OnTertiaryDark,
+    tertiaryContainer = TertiaryContainerDark,
+    onTertiaryContainer = OnTertiaryContainerDark,
+    error = ErrorDark,
+    errorContainer = ErrorContainerDark,
+    onError = OnErrorDark,
+    onErrorContainer = OnErrorContainerDark,
+    background = BackgroundDark,
+    onBackground = OnBackgroundDark,
+    surface = SurfaceDark,
+    onSurface = OnSurfaceDark,
+    surfaceVariant = SurfaceVariantDark,
+    onSurfaceVariant = OnSurfaceVariantDark,
+    outline = OutlineDark,
+    outlineVariant = OutlineVariantDark,
+    scrim = Color(0xFF000000),
+    surfaceTint = PrimaryDark
 )
 
 @Composable
 fun SICENETTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    // Dynamic color in this app is turned off for learning purposes
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
@@ -64,10 +112,11 @@ fun SICENETTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
+            // Usar color de superficie para la barra de estado
             window.statusBarColor = colorScheme.primary.toArgb()
             WindowCompat
                 .getInsetsController(window, view)
-                .isAppearanceLightStatusBars = darkTheme
+                .isAppearanceLightStatusBars = !darkTheme
         }
     }
     MaterialTheme(

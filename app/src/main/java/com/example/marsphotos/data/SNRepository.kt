@@ -22,7 +22,8 @@ interface SNRepository {
 }
 
 class NetworkSNRepository(
-    private val snApiService: SICENETWService
+    private val snApiService: SICENETWService,
+    private val sessionManager: SessionManager
 ) : SNRepository {
 
     private var userMatricula: String = ""
@@ -125,6 +126,8 @@ class NetworkSNRepository(
 
                     if (accesoValue.lowercase() == "true" || accesoValue == "1") {
                         userMatricula = matricula
+                        // También guardar en SessionManager para persistencia
+                        sessionManager.saveSession(matricula, contrasenia)
                         return true
                     }
 
@@ -350,9 +353,23 @@ class NetworkSNRepository(
 
     /**
      * Obtiene la matrícula del usuario autenticado
+     * Primero intenta la variable en memoria, si está vacía usa SessionManager
      */
     override suspend fun getMatricula(): String {
-        return userMatricula
+        Log.d("SNRepository", "getMatricula() llamado - userMatricula='$userMatricula'")
+        return if (userMatricula.isNotEmpty()) {
+            Log.d("SNRepository", "Usando userMatricula en memoria: $userMatricula")
+            userMatricula
+        } else {
+            // Fallback a SessionManager para modo offline
+            val sessionMatricula = sessionManager.getMatricula()
+            Log.d("SNRepository", "SessionManager matrícula: '$sessionMatricula'")
+            if (sessionMatricula.isNotEmpty()) {
+                // Restaurar también la variable en memoria para futuras llamadas
+                userMatricula = sessionMatricula
+            }
+            sessionMatricula
+        }
     }
 
     private fun unescapeXml(input: String): String {
