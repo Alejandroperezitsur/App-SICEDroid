@@ -14,6 +14,7 @@ Aplicación Android que implementa autenticación SOAP con el servicio web SICEN
 - **Perfil Académico**: Visualización de información del estudiante
 - **Manejo de Errores**: Gestión robusta de excepciones
 - **Arquitectura MVVM**: Patrón Repository implementado
+- **Content Provider**: Exposición segura de datos académicos a otras apps con permisos READ/WRITE
 
 ## 🔑 Características Técnicas
 
@@ -200,9 +201,31 @@ Este proyecto se proporciona bajo los términos especificados en el archivo LICE
 
 ## 🎓 Asignatura
 
-**Práctica**: Autenticación y consulta  
+**Práctica**: Content Provider en SICEDroid Compose  
 **Profesores**: ALEJANDRO PÉREZ VÁZQUEZ, JUAN CARLOS MORENO LÓPEZ  
 **Institución**: TecNM Guanajuato
+
+## 🔗 Content Provider
+
+Este proyecto ahora incluye un **Content Provider** que expone los datos académicos almacenados en Room:
+
+### URIs Disponibles
+- `content://com.example.marsphotos.provider/student` - Perfil del estudiante
+- `content://com.example.marsphotos.provider/kardex` - Historial académico
+- `content://com.example.marsphotos.provider/carga` - Carga académica actual
+- `content://com.example.marsphotos.provider/califunidad` - Calificaciones por unidad
+- `content://com.example.marsphotos.provider/califfinal` - Calificaciones finales
+
+### Permisos Personalizados
+- `com.example.marsphotos.provider.READ` - Permiso de lectura
+- `com.example.marsphotos.provider.WRITE` - Permiso de escritura
+
+### Aplicación Cliente
+Se desarrolló una aplicación cliente independiente (`SICEDroid-Client`) que consume este Content Provider:
+- UI moderna con Jetpack Compose
+- Navegación por pestañas
+- Panel de prueba de permisos
+- Operaciones CRUD completas
 
 ## ✅ Checklist de Implementación
 
@@ -218,6 +241,11 @@ Este proyecto se proporciona bajo los términos especificados en el archivo LICE
 - [x] Navegación
 - [x] Documentación
 - [x] Versionamiento Git
+- [x] **Content Provider implementado**
+- [x] **Permisos READ/WRITE configurados**
+- [x] **Aplicación cliente desarrollada**
+- [x] **UI moderna con Compose**
+- [x] **Pruebas de seguridad implementadas**
 
 ---
 

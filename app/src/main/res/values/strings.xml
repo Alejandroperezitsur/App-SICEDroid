@@ -71,4 +71,10 @@
     <string name="home_error_image_content_description">Error de conexión</string>
     <string name="home_error_message">No se pudieron cargar los datos</string>
     <string name="home_retry">Reintentar</string>
+
+    <!-- Content Provider Permissions -->
+    <string name="permission_read_label">Leer datos académicos SICEDroid</string>
+    <string name="permission_read_desc">Permite leer datos del Content Provider de SICEDroid</string>
+    <string name="permission_write_label">Escribir datos académicos SICEDroid</string>
+    <string name="permission_write_desc">Permite modificar datos del Content Provider de SICEDroid</string>
 </resources>

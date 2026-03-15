@@ -1,24 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  ~ Copyright (C) 2023 The Android Open Source Project
-  ~
-  ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ you may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License at
-  ~
-  ~     https://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
-  -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Permisos de Internet y Notificaciones -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Permisos para consumir el Content Provider -->
+    <uses-permission android:name="com.example.marsphotos.provider.READ" />
+    <uses-permission android:name="com.example.marsphotos.provider.WRITE" />
+
+    <!-- Definición de Permisos personalizados -->
+    <permission
+        android:name="com.example.marsphotos.provider.READ"
+        android:label="@string/permission_read_label"
+        android:description="@string/permission_read_desc"
+        android:protectionLevel="dangerous" />
+
+    <permission
+        android:name="com.example.marsphotos.provider.WRITE"
+        android:label="@string/permission_write_label"
+        android:description="@string/permission_write_desc"
+        android:protectionLevel="dangerous" />
+
     <application
         android:usesCleartextTraffic="true"
         android:name=".MarsPhotosApplication"
@@ -29,6 +33,17 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SICENET"
         tools:targetApi="33">
+
+        <!-- Content Provider para exponer datos académicos -->
+        <provider
+            android:name=".data.provider.SicenetContentProvider"
+            android:authorities="com.example.marsphotos.provider"
+            android:exported="true"
+            android:readPermission="com.example.marsphotos.provider.READ"
+            android:writePermission="com.example.marsphotos.provider.WRITE"
+            android:enabled="true"
+            android:grantUriPermissions="true" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

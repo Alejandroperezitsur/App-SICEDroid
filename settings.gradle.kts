@@ -20,3 +20,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "SICEnetProject"
 include(":app")
+include(":SICEDroid-Client:app")
