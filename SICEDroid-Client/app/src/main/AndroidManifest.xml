@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Permisos para acceder al Content Provider de SICEDroid -->
+    <uses-permission android:name="com.example.marsphotos.provider.READ" />
+    <uses-permission android:name="com.example.marsphotos.provider.WRITE" />
+
+    <!-- Queries para visibilidad del Content Provider en Android 11+ -->
+    <queries>
+        <package android:name="com.example.marsphotos" />
+        <provider android:authorities="com.example.marsphotos.provider" />
+    </queries>
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@drawable/ic_launcher"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.SICEDroidClient"
+        tools:targetApi="34">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.SICEDroidClient">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+    </application>
+
+</manifest>

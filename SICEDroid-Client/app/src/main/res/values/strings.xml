@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">SICEDroid Client</string>
+    <string name="title_home">Inicio</string>
+    <string name="title_kardex">Kardex</string>
+    <string name="title_carga">Carga Académica</string>
+    <string name="title_calificaciones">Calificaciones</string>
+    <string name="title_permisos">Permisos</string>
+    <string name="permission_read_status">Permiso de Lectura</string>
+    <string name="permission_write_status">Permiso de Escritura</string>
+    <string name="permission_granted">Concedido</string>
+    <string name="permission_denied">No concedido</string>
+    <string name="consultar">Consultar Datos</string>
+    <string name="insertar">Insertar Datos (Prueba)</string>
+    <string name="eliminar">Eliminar Datos (Prueba)</string>
+    <string name="no_data">No hay datos disponibles</string>
+    <string name="error_reading">Error al leer datos. Verifica permisos.</string>
+    <string name="error_writing">Error de escritura. Verifica permiso WRITE.</string>
+    <string name="success_reading">Datos leídos correctamente</string>
+    <string name="success_writing">Operación de escritura exitosa</string>
+    <string name="matricula_hint">Matrícula del estudiante</string>
+    <string name="welcome_message">Cliente del Content Provider SICEDroid</string>
+    <string name="welcome_subtitle">Esta app consume datos del Content Provider de SICEDroid usando permisos personalizados</string>
+    <string name="provider_info_authority">Authority: com.example.marsphotos.provider</string>
+    <string name="provider_info_uris">URIs disponibles: /student, /kardex, /carga, /califunidad, /califfinal</string>
+</resources>
