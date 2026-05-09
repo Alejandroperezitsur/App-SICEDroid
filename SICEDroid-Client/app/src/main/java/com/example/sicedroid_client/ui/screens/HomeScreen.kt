@@ -251,6 +251,8 @@ fun WelcomeScreen(
             }
         }
 
+        //6. VISUALIZACIÓN DE DATOS
+        //6.1 CREAMOS UNA INTERFAZ PARA VISUALIZAR LOS DATOS DEL ESTUDIANTE
         item {
             // Información del estudiante si está disponible
             student?.let { s ->

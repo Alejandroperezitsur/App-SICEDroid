@@ -16,14 +16,14 @@ import com.example.sicedroid_client.model.Student
 import kotlinx.coroutines.launch
 
 /**
- * ViewModel principal para la aplicación cliente.
+ * 5. GESTIÓN DE ESTADO Y UI - ViewModel principal para la aplicación cliente.
  * Gestiona el estado de la UI y las operaciones con el Content Provider.
  */
 class AcademicViewModel(application: Application) : AndroidViewModel(application) {
 
     private val providerClient = SicenetProviderClient(application.applicationContext)
 
-    // Estados de permisos
+    // 5.2 EXPONER Estados de COMPOSE
     private val _hasReadPermission = mutableStateOf(false)
     val hasReadPermission: State<Boolean> = _hasReadPermission
 
@@ -64,6 +64,8 @@ class AcademicViewModel(application: Application) : AndroidViewModel(application
     /**
      * Verifica el estado actual de los permisos.
      */
+    // 5.1.1. Verificar permisos de lectura
+    // 5.1.2. Verificar permisos de escritura
     fun checkPermissions() {
         _hasReadPermission.value = providerClient.hasReadPermission()
         _hasWritePermission.value = providerClient.hasWritePermission()

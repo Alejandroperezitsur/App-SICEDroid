@@ -22,7 +22,10 @@ import com.example.sicedroid_client.viewmodel.AcademicViewModel
  */
 class MainActivity : ComponentActivity() {
 
-    // Launcher para solicitar permisos
+    // 3. SOLICITUD DE PERMISOS EN TIEMPO DE EJECUCIÓN
+    // 3.1. Launcher para solicitar permisos
+    // 3.2. Manejo de resultados de la solicitud de permisos
+    // 4. REGRESAMOS A SICENETPROVIDERCLIENT 122
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->

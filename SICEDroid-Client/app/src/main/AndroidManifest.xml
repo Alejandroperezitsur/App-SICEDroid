@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Permisos para acceder al Content Provider de SICEDroid -->
+    <!-- 1. Permisos para acceder al Content Provider de SICEDroid -->     
     <uses-permission android:name="com.example.marsphotos.provider.READ" />
     <uses-permission android:name="com.example.marsphotos.provider.WRITE" />
 

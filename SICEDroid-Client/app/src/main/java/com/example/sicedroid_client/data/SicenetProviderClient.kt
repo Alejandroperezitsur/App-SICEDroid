@@ -16,13 +16,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
+ * 2. CONTRATO DE COMUNICACIÓN PARA QUE EL CLIENTE SEPA QUÉ CONSULTAR
  * Contract class que replica las definiciones del Content Provider de SICEDroid.
  * El cliente debe usar estas mismas URIs y columnas.
  */
 object SicenetProviderContract {
     const val CONTENT_AUTHORITY = "com.example.marsphotos.provider"
     val BASE_CONTENT_URI: Uri = Uri.parse("content://$CONTENT_AUTHORITY")
-
+    /**
+     * 2.1. RUTAS DE LOS CONTENT PROVIDERS
+     */
     object Paths {
         const val STUDENT = "student"
         const val KARDEX = "kardex"
@@ -124,12 +127,13 @@ class SicenetProviderClient(private val context: Context) {
                 PackageManager.PERMISSION_GRANTED
     }
 
-    // ==================== OPERACIONES DE LECTURA ====================
+    // ==================== 4. IMPLEMENTACIÓN DEL CLIENTE - OPERACIONES DE LECTURA Y ESCRITURA ====================
 
     /**
      * Obtiene los datos del estudiante por matrícula.
      * Requiere permiso READ.
      */
+    //ESCRITURA - 411
     suspend fun getStudent(matricula: String): ProviderResult<Student?> = withContext(Dispatchers.IO) {
         try {
             Log.d(TAG, "Consultando estudiante: $matricula")
@@ -403,8 +407,8 @@ class SicenetProviderClient(private val context: Context) {
         }
     }
 
-    // ==================== OPERACIONES DE ESCRITURA ====================
-
+    // ==================== 4.2 OPERACIONES DE ESCRITURA ====================
+    // 4.2.1. INSERTAR UN REGISTRO EN EL KARDEX
     /**
      * Inserta un registro en el kardex.
      * Requiere permiso WRITE.
