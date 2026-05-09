@@ -14,7 +14,16 @@ kotlin {
         }
     }
     
-    jvm("desktop")
+    jvm("desktop") {
+        compilations.all {
+            kotlinOptions.jvmTarget = "17"
+        }
+    }
+    
+    js(IR) {
+        browser()
+        binaries.executable()
+    }
     
     sourceSets {
         val commonMain by getting {
@@ -25,25 +34,36 @@ kotlin {
                 implementation(compose.ui)
                 @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
                 implementation(compose.components.resources)
-                // Retrofit and Gson for JVM
-                implementation("com.squareup.retrofit2:retrofit:2.9.0")
-                implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-                implementation("org.jsoup:jsoup:1.16.1")
-                implementation("com.google.code.gson:gson:2.10.1")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-                implementation("io.coil-kt:coil-compose:2.4.0")
             }
         }
         val androidMain by getting {
             dependencies {
                 implementation("androidx.compose.ui:ui-tooling-preview:1.5.0")
                 implementation("androidx.activity:activity-compose:1.8.0")
+                // Retrofit and Gson for JVM
+                implementation("com.squareup.retrofit2:retrofit:2.9.0")
+                implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+                implementation("org.jsoup:jsoup:1.16.1")
+                implementation("com.google.code.gson:gson:2.10.1")
+                implementation("io.coil-kt:coil-compose:2.4.0")
             }
         }
         val desktopMain by getting {
             dependencies {
                 implementation(compose.desktop.currentOs)
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.7.3")
+                // Retrofit and Gson for JVM
+                implementation("com.squareup.retrofit2:retrofit:2.9.0")
+                implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+                implementation("org.jsoup:jsoup:1.16.1")
+                implementation("com.google.code.gson:gson:2.10.1")
+                implementation("io.coil-kt:coil-compose:2.4.0")
+            }
+        }
+        val jsMain by getting {
+            dependencies {
+                // Web specific dependencies
             }
         }
     }
