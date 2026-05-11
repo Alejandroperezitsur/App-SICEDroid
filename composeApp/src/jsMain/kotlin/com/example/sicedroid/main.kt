@@ -7,7 +7,10 @@ import org.jetbrains.skiko.wasm.onWasmReady
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     onWasmReady {
-        CanvasBasedWindow(title = "SICEDroid") {
+        CanvasBasedWindow(
+            title = "SICEDroid",
+            canvasElementId = "ComposeTarget"
+        ) {
             App()
         }
     }

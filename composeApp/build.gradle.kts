@@ -36,6 +36,9 @@ kotlin {
                 @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
                 implementation(compose.components.resources)
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+                implementation("io.ktor:ktor-client-core:2.3.5")
+                implementation("io.ktor:ktor-client-content-negotiation:2.3.5")
+                implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.5")
             }
         }
         val androidMain by getting {
@@ -48,6 +51,7 @@ kotlin {
                 implementation("org.jsoup:jsoup:1.16.1")
                 implementation("com.google.code.gson:gson:2.10.1")
                 implementation("io.coil-kt:coil-compose:2.4.0")
+                implementation("io.ktor:ktor-client-android:2.3.5")
             }
         }
         val desktopMain by getting {
@@ -60,11 +64,13 @@ kotlin {
                 implementation("org.jsoup:jsoup:1.16.1")
                 implementation("com.google.code.gson:gson:2.10.1")
                 implementation("io.coil-kt:coil-compose:2.4.0")
+                implementation("io.ktor:ktor-client-cio:2.3.5")
             }
         }
         val jsMain by getting {
             dependencies {
                 // Web specific dependencies
+                implementation("io.ktor:ktor-client-js:2.3.5")
             }
         }
     }
