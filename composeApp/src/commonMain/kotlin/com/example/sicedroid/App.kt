@@ -8,7 +8,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -94,7 +93,7 @@ fun App() {
                                 color = Color.White.copy(alpha = 0.2f)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Filled.School,
+                                    imageVector = Icons.Filled.Person,
                                     contentDescription = null,
                                     tint = Color.White,
                                     modifier = Modifier.padding(20.dp).fillMaxSize()
@@ -229,7 +228,7 @@ fun App() {
                                     modifier = Modifier.padding(16.dp)
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Filled.School,
+                                        imageVector = Icons.Filled.Person,
                                         contentDescription = null,
                                         tint = Color.White,
                                         modifier = Modifier.size(64.dp)

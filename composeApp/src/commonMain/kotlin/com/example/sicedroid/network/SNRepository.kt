@@ -73,7 +73,7 @@ class SNRepository(private val apiService: SiceApiService) {
             var resultText = extractResult(xmlString, "getAlumnoAcademicoWithLineamientoResult")
             
             if (resultText != null) {
-                var processed = resultText
+                var processed = resultText!!
                 while (processed.contains("&lt;")) {
                     processed = processed.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&")
                 }
