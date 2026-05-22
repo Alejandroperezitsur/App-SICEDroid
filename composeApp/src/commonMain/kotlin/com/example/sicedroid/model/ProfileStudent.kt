@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 data class ProfileStudent(
     val matricula: String = "",
     val nombre: String = "",
+    val apellidos: String = "",
     val carrera: String = "",
     val especialidad: String = "",
     val semestre: Int = 0,
@@ -23,5 +24,8 @@ data class ProfileStudent(
     val sinAdeudos: String = "",
     val lineamiento: Int = 1,
     val modEducativo: Int = 1,
-    val operaciones: List<String> = emptyList()
+    val operaciones: List<String> = emptyList(),
+    val kardex: List<MateriaKardex> = emptyList(),
+    val cargaAcademica: List<MateriaCarga> = emptyList(),
+    val calificacionesParciales: List<MateriaParcial> = emptyList()
 )

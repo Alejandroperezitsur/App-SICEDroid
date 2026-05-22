@@ -1,0 +1,20 @@
+CREATE TABLE KardexEntity (
+    matricula TEXT NOT NULL,
+    clave TEXT NOT NULL,
+    nombre TEXT NOT NULL DEFAULT '',
+    calificacion INTEGER AS Int NOT NULL DEFAULT 0,
+    acreditacion TEXT NOT NULL DEFAULT '',
+    periodo TEXT NOT NULL DEFAULT '',
+    last_update INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (matricula, clave, periodo)
+);
+
+getKardex:
+SELECT * FROM KardexEntity WHERE matricula = ?;
+
+insertKardex:
+INSERT OR REPLACE INTO KardexEntity(matricula, clave, nombre, calificacion, acreditacion, periodo, last_update)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+deleteKardex:
+DELETE FROM KardexEntity WHERE matricula = ?;

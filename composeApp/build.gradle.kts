@@ -3,6 +3,8 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.compose")
     id("org.jetbrains.kotlin.plugin.serialization")
+    id("org.jetbrains.kotlin.plugin.compose")
+    id("app.cash.sqldelight")
 }
 
 kotlin {
@@ -20,8 +22,23 @@ kotlin {
         }
     }
     
+    @OptIn(org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl::class)
+    wasmJs {
+        moduleName = "composeApp"
+        browser {
+            commonWebpackConfig {
+                devServer?.port = 8080
+            }
+        }
+        binaries.executable()
+    }
+    
     js(IR) {
-        browser()
+        browser {
+            commonWebpackConfig {
+                devServer?.port = 8080
+            }
+        }
         binaries.executable()
     }
     
@@ -36,9 +53,15 @@ kotlin {
                 @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
                 implementation(compose.components.resources)
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-                implementation("io.ktor:ktor-client-core:2.3.5")
-                implementation("io.ktor:ktor-client-content-negotiation:2.3.5")
-                implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.5")
+                implementation("io.ktor:ktor-client-core:3.0.0")
+                implementation("io.ktor:ktor-client-content-negotiation:3.0.0")
+                implementation("io.ktor:ktor-serialization-kotlinx-json:3.0.0")
+                implementation("io.ktor:ktor-client-logging:3.0.0")
+                implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.8.2")
+                implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.8.2")
+                implementation("io.coil-kt.coil3:coil-compose:3.0.0-rc01")
+                implementation("io.coil-kt.coil3:coil-network-ktor3:3.0.0-rc01")
+                implementation("app.cash.sqldelight:coroutines-extensions:2.0.2")
             }
         }
         val androidMain by getting {
@@ -50,8 +73,8 @@ kotlin {
                 implementation("com.squareup.retrofit2:converter-gson:2.9.0")
                 implementation("org.jsoup:jsoup:1.16.1")
                 implementation("com.google.code.gson:gson:2.10.1")
-                implementation("io.coil-kt:coil-compose:2.4.0")
-                implementation("io.ktor:ktor-client-android:2.3.5")
+                implementation("io.ktor:ktor-client-android:3.0.0")
+                implementation("app.cash.sqldelight:android-driver:2.0.2")
             }
         }
         val desktopMain by getting {
@@ -63,14 +86,26 @@ kotlin {
                 implementation("com.squareup.retrofit2:converter-gson:2.9.0")
                 implementation("org.jsoup:jsoup:1.16.1")
                 implementation("com.google.code.gson:gson:2.10.1")
-                implementation("io.coil-kt:coil-compose:2.4.0")
-                implementation("io.ktor:ktor-client-cio:2.3.5")
+                implementation("io.ktor:ktor-client-cio:3.0.0")
+                implementation("org.slf4j:slf4j-simple:2.0.9")
+                implementation("app.cash.sqldelight:sqlite-driver:2.0.2")
             }
         }
         val jsMain by getting {
             dependencies {
-                // Web specific dependencies
-                implementation("io.ktor:ktor-client-js:2.3.5")
+                implementation(compose.runtime)
+                implementation(compose.foundation)
+                implementation(compose.material3)
+                implementation(compose.ui)
+                implementation("io.ktor:ktor-client-js:3.0.0")
+            }
+        }
+        val wasmJsMain by getting {
+            dependencies {
+                implementation(compose.runtime)
+                implementation(compose.foundation)
+                implementation(compose.material3)
+                implementation(compose.ui)
             }
         }
     }
@@ -97,6 +132,14 @@ android {
     }
     dependencies {
         debugImplementation("androidx.compose.ui:ui-tooling:1.5.0")
+    }
+}
+
+sqldelight {
+    databases {
+        create("SicenetDatabase") {
+            packageName.set("com.example.sicedroid.db")
+        }
     }
 }
 

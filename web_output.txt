@@ -1,0 +1,122 @@
+Starting a Gradle Daemon, 1 stopped Daemon could not be reused, use --status for details
+Daemon JVM discovery is an incubating feature.
+
+> Configure project :app
+WARNING: The option setting 'android.defaults.buildfeatures.buildconfig=true' is deprecated.
+The current default is 'false'.
+It will be removed in version 9.0 of the Android Gradle plugin.
+You can resolve this warning in Android Studio via `Refactor` > `Migrate BuildConfig to Gradle Build Files`
+Configuration 'jsNpmAggregated' was resolved during configuration time.
+This is a build performance and scalability issue.
+See https://github.com/gradle/gradle/issues/2298
+Run with --info for a stacktrace.
+Configuration 'jsTestNpmAggregated' was resolved during configuration time.
+This is a build performance and scalability issue.
+See https://github.com/gradle/gradle/issues/2298
+Run with --info for a stacktrace.
+
+> Task :kotlinNodeJsSetup
+> Task :kotlinNpmCachesSetup
+> Task :kotlinRestoreYarnLock
+> Task :kotlinYarnSetup
+> Task :composeApp:jsPackageJson
+> Task :composeApp:jsTestPackageJson
+> Task :composeApp:jsPublicPackageJson
+> Task :composeApp:jsTestPublicPackageJson
+> Task :packageJsonUmbrella
+> Task :rootPackageJson
+> Task :kotlinNpmInstall
+> Task :kotlinStoreYarnLock
+> Task :composeApp:compileKotlinJs UP-TO-DATE
+> Task :composeApp:jsProcessResources UP-TO-DATE
+> Task :composeApp:jsMainClasses UP-TO-DATE
+> Task :composeApp:compileDevelopmentExecutableKotlinJs
+
+> Task :composeApp:jsDevelopmentExecutableCompileSync
+Cannot rewrite paths in JavaScript source maps: Too many sources or format is not supported
+
+> Task :composeApp:jsBrowserDevelopmentRun
+<i> [webpack-dev-server] Project is running at:
+<i> [webpack-dev-server] Loopback: http://localhost:8080/
+<i> [webpack-dev-server] On Your Network (IPv4): http://192.168.1.91:8080/
+<i> [webpack-dev-server] On Your Network (IPv6): http://[fe80::b2dd:a2d2:781b:32c7]:8080/
+<i> [webpack-dev-server] Content not from webpack is served from 'kotlin, ..\..\..\..\composeApp\build\processedResources\js\main' directory
+<i> [webpack-dev-middleware] wait until bundle finished: /
+Module not found: Error: Can't resolve './compose-multiplatform-core-ui.js' in 'C:\Users\Alejandro\Downloads\App-SICEDroid\build\js\packages\SICEnetProject-composeApp\kotlin'
+
+Module not found: Error: Can't resolve './compose-multiplatform-core-ui.js' in 'C:\Users\Alejandro\Downloads\App-SICEDroid\build\js\packages\SICEnetProject-composeApp\kotlin'
+
+Module not found: Error: Can't resolve './compose-multiplatform-core-ui.js' in 'C:\Users\Alejandro\Downloads\App-SICEDroid\build\js\packages\SICEnetProject-composeApp\kotlin'
+
+Module not found: Error: Can't resolve './compose-multiplatform-core-ui.js' in 'C:\Users\Alejandro\Downloads\App-SICEDroid\build\js\packages\SICEnetProject-composeApp\kotlin'
+
+Module not found: Error: Can't resolve './compose-multiplatform-core-ui.js' in 'C:\Users\Alejandro\Downloads\App-SICEDroid\build\js\packages\SICEnetProject-composeApp\kotlin'
+
+Module not found: Error: Can't resolve './compose-multiplatform-core-ui.js' in 'C:\Users\Alejandro\Downloads\App-SICEDroid\build\js\packages\SICEnetProject-composeApp\kotlin'
+
+Module not found: Error: Can't resolve './compose-multiplatform-core-ui.js' in 'C:\Users\Alejandro\Downloads\App-SICEDroid\build\js\packages\SICEnetProject-composeApp\kotlin'
+
+Module not found: Error: Can't resolve './compose-multiplatform-core-ui.js' in 'C:\Users\Alejandro\Downloads\App-SICEDroid\build\js\packages\SICEnetProject-composeApp\kotlin'
+
+Module not found: Error: Can't resolve './ktor-ktor-shared-ktor-events.js' in 'C:\Users\Alejandro\Downloads\App-SICEDroid\build\js\packages\SICEnetProject-composeApp\kotlin'
+
+Module not found: Error: C:\Users\Alejandro\Downloads\App-SICEDroid\build\js\package.json (directory description file): Error: No file content
+
+Module not found: Error: C:\Users\Alejandro\Downloads\App-SICEDroid\build\js\package.json (directory description file): Error: No file content
+
+Module not found: Error: C:\Users\Alejandro\Downloads\App-SICEDroid\build\js\package.json (directory description file): Error: No file content
+
+
+> Task :composeApp:jsBrowserDevelopmentRun FAILED
+
+[Incubating] Problems report is available at: file:///C:/Users/Alejandro/Downloads/App-SICEDroid/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':composeApp:jsBrowserDevelopmentRun'.
+> <i> [webpack-dev-server] Project is running at:
+  <i> [webpack-dev-server] Loopback: http://localhost:8080/
+  <i> [webpack-dev-server] On Your Network (IPv4): http://192.168.1.91:8080/
+  <i> [webpack-dev-server] On Your Network (IPv6): http://[fe80::b2dd:a2d2:781b:32c7]:8080/
+  <i> [webpack-dev-server] Content not from webpack is served from 'kotlin, ..\..\..\..\composeApp\build\processedResources\js\main' directory
+  <i> [webpack-dev-middleware] wait until bundle finished: /
+  Module not found: Error: Can't resolve './compose-multiplatform-core-ui.js' in 'C:\Users\Alejandro\Downloads\App-SICEDroid\build\js\packages\SICEnetProject-composeApp\kotlin'
+  
+  Module not found: Error: Can't resolve './compose-multiplatform-core-ui.js' in 'C:\Users\Alejandro\Downloads\App-SICEDroid\build\js\packages\SICEnetProject-composeApp\kotlin'
+  
+  Module not found: Error: Can't resolve './compose-multiplatform-core-ui.js' in 'C:\Users\Alejandro\Downloads\App-SICEDroid\build\js\packages\SICEnetProject-composeApp\kotlin'
+  
+  Module not found: Error: Can't resolve './compose-multiplatform-core-ui.js' in 'C:\Users\Alejandro\Downloads\App-SICEDroid\build\js\packages\SICEnetProject-composeApp\kotlin'
+  
+  Module not found: Error: Can't resolve './compose-multiplatform-core-ui.js' in 'C:\Users\Alejandro\Downloads\App-SICEDroid\build\js\packages\SICEnetProject-composeApp\kotlin'
+  
+  Module not found: Error: Can't resolve './compose-multiplatform-core-ui.js' in 'C:\Users\Alejandro\Downloads\App-SICEDroid\build\js\packages\SICEnetProject-composeApp\kotlin'
+  
+  Module not found: Error: Can't resolve './compose-multiplatform-core-ui.js' in 'C:\Users\Alejandro\Downloads\App-SICEDroid\build\js\packages\SICEnetProject-composeApp\kotlin'
+  
+  Module not found: Error: Can't resolve './compose-multiplatform-core-ui.js' in 'C:\Users\Alejandro\Downloads\App-SICEDroid\build\js\packages\SICEnetProject-composeApp\kotlin'
+  
+  Module not found: Error: Can't resolve './ktor-ktor-shared-ktor-events.js' in 'C:\Users\Alejandro\Downloads\App-SICEDroid\build\js\packages\SICEnetProject-composeApp\kotlin'
+  
+  Module not found: Error: C:\Users\Alejandro\Downloads\App-SICEDroid\build\js\package.json (directory description file): Error: No file content
+  
+  Module not found: Error: C:\Users\Alejandro\Downloads\App-SICEDroid\build\js\package.json (directory description file): Error: No file content
+  
+  Module not found: Error: C:\Users\Alejandro\Downloads\App-SICEDroid\build\js\package.json (directory description file): Error: No file content
+
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.13/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 4h 59m 7s
+16 actionable tasks: 14 executed, 2 up-to-date

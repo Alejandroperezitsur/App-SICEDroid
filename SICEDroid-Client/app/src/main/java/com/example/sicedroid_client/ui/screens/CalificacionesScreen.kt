@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,8 +20,10 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Grade
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -32,9 +35,12 @@ import androidx.compose.ui.unit.dp
 import com.example.sicedroid_client.model.CalifFinal
 import com.example.sicedroid_client.model.CalifUnidad
 
-/**
- * Pantalla que muestra las calificaciones parciales y finales.
- */
+private val GradeExcellent = Color(0xFF2E7D32)
+private val GradeGood = Color(0xFF689F38)
+private val GradeAverage = Color(0xFFFBC02D)
+private val GradePoor = Color(0xFFFF9800)
+private val GradeFail = Color(0xFFE53935)
+
 @Composable
 fun CalificacionesScreen(
     califUnidad: List<CalifUnidad>,
@@ -48,17 +54,11 @@ fun CalificacionesScreen(
             .padding(16.dp)
     ) {
         when {
-            !hasPermission -> {
-                PermissionRequiredMessage()
-            }
-            califUnidad.isEmpty() && califFinal.isEmpty() && !isLoading -> {
+            !hasPermission -> PermissionRequiredMessage()
+            califUnidad.isEmpty() && califFinal.isEmpty() && !isLoading ->
                 EmptyDataMessage(message = "No hay calificaciones. Usa la pestaña Permisos para consultar.")
-            }
             else -> {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // Calificaciones Finales
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (califFinal.isNotEmpty()) {
                         item {
                             Text(
@@ -68,13 +68,9 @@ fun CalificacionesScreen(
                                 modifier = Modifier.padding(bottom = 8.dp, top = 16.dp)
                             )
                         }
-
-                        items(califFinal) { calif ->
-                            CalifFinalCard(calif = calif)
-                        }
+                        items(califFinal) { calif -> CalifFinalCard(calif = calif) }
                     }
 
-                    // Calificaciones por Unidad
                     if (califUnidad.isNotEmpty()) {
                         item {
                             Text(
@@ -84,10 +80,7 @@ fun CalificacionesScreen(
                                 modifier = Modifier.padding(bottom = 8.dp, top = 24.dp)
                             )
                         }
-
-                        items(califUnidad) { calif ->
-                            CalifUnidadCard(calif = calif)
-                        }
+                        items(califUnidad) { calif -> CalifUnidadCard(calif = calif) }
                     }
                 }
             }
@@ -97,61 +90,47 @@ fun CalificacionesScreen(
 
 @Composable
 fun CalifFinalCard(calif: CalifFinal) {
-    val isApproved = calif.calif >= 70
-    val backgroundColor = if (isApproved) {
-        MaterialTheme.colorScheme.surface
-    } else {
-        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-    }
+    val gradeColor = getGradeColor(calif.calif.toFloat())
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor)
+        shape = RoundedCornerShape(16.dp)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = calif.materia,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
+                Text(text = calif.materia, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = if (isApproved) Icons.Default.CheckCircle else Icons.Default.Grade,
+                        imageVector = if (calif.estaAprobada) Icons.Default.CheckCircle else Icons.Default.Grade,
                         contentDescription = null,
-                        tint = if (isApproved) Color(0xFF43A047) else MaterialTheme.colorScheme.error,
-                        modifier = Modifier.height(16.dp)
+                        tint = if (calif.estaAprobada) GradeExcellent else GradeFail,
+                        modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = if (isApproved) "Aprobada" else "No aprobada",
+                        text = if (calif.estaAprobada) "Aprobada" else "No aprobada",
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (isApproved) Color(0xFF43A047) else MaterialTheme.colorScheme.error
+                        color = if (calif.estaAprobada) GradeExcellent else GradeFail
                     )
                 }
             }
 
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(
-                        if (isApproved) Color(0xFF43A047) else MaterialTheme.colorScheme.error
-                    )
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = gradeColor.copy(alpha = 0.15f)
             ) {
                 Text(
                     text = calif.calif.toString(),
-                    color = Color.White,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    color = gradeColor,
                     fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.titleMedium
                 )
             }
         }
@@ -162,61 +141,75 @@ fun CalifFinalCard(calif: CalifFinal) {
 fun CalifUnidadCard(calif: CalifUnidad) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(16.dp)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = calif.materia,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
+            Text(text = calif.materia, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
 
-            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            // Mostrar parciales
-            calif.parciales.forEachIndexed { index, parcial ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "Unidad ${index + 1}:",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = parcial,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium
-                    )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                calif.parciales.forEachIndexed { index, grade ->
+                    ParcialGradeChip(unitNumber = index + 1, grade = grade)
                 }
-                Spacer(modifier = Modifier.height(4.dp))
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Promedio
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                Text(text = "Promedio:", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                Text(text = String.format("%.1f", calif.promedioParcial), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+            }
+        }
+    }
+}
+
+@Composable
+fun ParcialGradeChip(unitNumber: Int, grade: String) {
+    val califValue = grade.toFloatOrNull() ?: 0f
+    val color = when {
+        califValue >= 90 -> GradeExcellent
+        califValue >= 80 -> GradeGood
+        califValue >= 70 -> GradeAverage
+        califValue >= 60 -> GradePoor
+        else -> GradeFail
+    }
+    val isZero = grade == "0" || grade.isEmpty()
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = if (isZero) MaterialTheme.colorScheme.surfaceVariant else color.copy(alpha = 0.15f),
+            modifier = Modifier.size(56.dp).clip(RoundedCornerShape(12.dp))
+        ) {
+            Box(contentAlignment = Alignment.Center) {
                 Text(
-                    text = "Promedio:",
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = if (isZero) "-" else grade,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = "${calif.promedioParcial}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = if (isZero) MaterialTheme.colorScheme.onSurfaceVariant else color,
+                    style = MaterialTheme.typography.titleMedium
                 )
             }
         }
+        Spacer(modifier = Modifier.padding(top = 4.dp))
+        Text(text = "U$unitNumber", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+private fun getGradeColor(grade: Float): Color {
+    return when {
+        grade >= 90 -> GradeExcellent
+        grade >= 80 -> GradeGood
+        grade >= 70 -> GradeAverage
+        grade >= 60 -> GradePoor
+        else -> GradeFail
     }
 }

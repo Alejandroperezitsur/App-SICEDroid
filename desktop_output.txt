@@ -1,0 +1,32 @@
+Starting a Gradle Daemon, 1 stopped Daemon could not be reused, use --status for details
+Daemon JVM discovery is an incubating feature.
+
+> Configure project :app
+WARNING: The option setting 'android.defaults.buildfeatures.buildconfig=true' is deprecated.
+The current default is 'false'.
+It will be removed in version 9.0 of the Android Gradle plugin.
+You can resolve this warning in Android Studio via `Refactor` > `Migrate BuildConfig to Gradle Build Files`
+
+> Task :composeApp:compileKotlinDesktop UP-TO-DATE
+> Task :composeApp:desktopProcessResources NO-SOURCE
+> Task :composeApp:desktopMainClasses UP-TO-DATE
+> Task :composeApp:desktopJar
+> Task :composeApp:prepareAppResources NO-SOURCE
+> Task :composeApp:run
+[SKIKO] warn: Fallback to next API
+org.jetbrains.skiko.RenderException: Failed to choose DirectX12 adapter.
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+w: Detected multiple Kotlin daemon sessions at kotlin\sessions
+
+[Incubating] Problems report is available at: file:///C:/Users/Alejandro/Downloads/App-SICEDroid/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.13/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 59m 20s
+3 actionable tasks: 2 executed, 1 up-to-date

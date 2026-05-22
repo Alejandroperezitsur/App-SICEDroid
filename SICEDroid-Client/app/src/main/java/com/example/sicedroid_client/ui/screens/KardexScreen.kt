@@ -1,6 +1,5 @@
 package com.example.sicedroid_client.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,26 +14,31 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.Grade
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.sicedroid_client.model.KardexEntry
 
-/**
- * Pantalla que muestra el historial académico (Kardex).
- */
+private val GradeExcellent = Color(0xFF2E7D32)
+private val GradeGood = Color(0xFF689F38)
+private val GradeAverage = Color(0xFFFBC02D)
+private val GradePoor = Color(0xFFFF9800)
+private val GradeFail = Color(0xFFE53935)
+
 @Composable
 fun KardexScreen(
     kardex: List<KardexEntry>,
@@ -47,16 +51,11 @@ fun KardexScreen(
             .padding(16.dp)
     ) {
         when {
-            !hasPermission -> {
-                PermissionRequiredMessage()
-            }
-            kardex.isEmpty() && !isLoading -> {
+            !hasPermission -> PermissionRequiredMessage()
+            kardex.isEmpty() && !isLoading ->
                 EmptyDataMessage(message = "No hay datos en el kardex. Usa la pestaña Permisos para consultar.")
-            }
             else -> {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     item {
                         Text(
                             text = "Historial Académico (Kardex)",
@@ -72,9 +71,7 @@ fun KardexScreen(
                         )
                     }
 
-                    items(kardex) { entry ->
-                        KardexCard(entry = entry)
-                    }
+                    items(kardex) { entry -> KardexCard(entry = entry) }
                 }
             }
         }
@@ -83,76 +80,66 @@ fun KardexScreen(
 
 @Composable
 fun KardexCard(entry: KardexEntry) {
-    val isApproved = entry.calificacion >= 70
-    val cardColor = if (isApproved) {
-        MaterialTheme.colorScheme.surface
-    } else {
-        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-    }
+    val califColor = getGradeColor(entry.calificacion.toFloat())
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = cardColor)
+        shape = RoundedCornerShape(16.dp)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = entry.nombre,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Clave: ${entry.clave} | Periodo: ${entry.periodo}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                // Indicador de calificación
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(
-                            if (isApproved) Color(0xFF43A047) else MaterialTheme.colorScheme.error
-                        )
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                Text(
+                    text = entry.nombre,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.weight(1f),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = califColor.copy(alpha = 0.15f),
+                    modifier = Modifier.padding(start = 8.dp)
                 ) {
                     Text(
                         text = entry.calificacion.toString(),
-                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.titleMedium
+                        color = califColor,
+                        style = MaterialTheme.typography.titleSmall
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                ItemInfoChip(icon = Icons.Filled.School, text = "Clave: ${entry.clave}")
+                ItemInfoChip(icon = Icons.Filled.CalendarToday, text = entry.periodo)
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = if (isApproved) Icons.Default.CheckCircle else Icons.Default.Error,
+                    imageVector = if (entry.estaAcreditada) Icons.Default.CheckCircle else Icons.Default.Error,
                     contentDescription = null,
-                    tint = if (isApproved) Color(0xFF43A047) else MaterialTheme.colorScheme.error,
-                    modifier = Modifier.height(16.dp)
+                    tint = if (entry.estaAcreditada) GradeExcellent else GradeFail,
+                    modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = "Acreditación: ${entry.acreditacion}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (isApproved) Color(0xFF43A047) else MaterialTheme.colorScheme.error
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -160,61 +147,20 @@ fun KardexCard(entry: KardexEntry) {
 }
 
 @Composable
-fun PermissionRequiredMessage() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.Error,
-            contentDescription = null,
-            modifier = Modifier.height(64.dp),
-            tint = MaterialTheme.colorScheme.error
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Permiso Requerido",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Se necesita el permiso de lectura para acceder a los datos del Content Provider de SICEDroid.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+fun ItemInfoChip(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(imageVector = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(text = text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
-@Composable
-fun EmptyDataMessage(message: String) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.Grade,
-            contentDescription = null,
-            modifier = Modifier.height(64.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Sin Datos",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+private fun getGradeColor(grade: Float): Color {
+    return when {
+        grade >= 90 -> GradeExcellent
+        grade >= 80 -> GradeGood
+        grade >= 70 -> GradeAverage
+        grade >= 60 -> GradePoor
+        else -> GradeFail
     }
 }

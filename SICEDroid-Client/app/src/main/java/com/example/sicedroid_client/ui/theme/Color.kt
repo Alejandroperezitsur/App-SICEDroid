@@ -2,23 +2,35 @@ package com.example.sicedroid_client.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+val PrimaryGreen = Color(0xFF1B5E20)
+val PrimaryContainer = Color(0xFFC8E6C9)
+val OnPrimary = Color(0xFFFFFFFF)
+val OnPrimaryContainer = Color(0xFF002105)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+val SecondaryTeal = Color(0xFF00695C)
+val SecondaryContainer = Color(0xFFB2DFDB)
+val OnSecondary = Color(0xFFFFFFFF)
+val OnSecondaryContainer = Color(0xFF00201F)
 
-// Colores del tema SICEDroid
-val PrimaryBlue = Color(0xFF1565C0)
-val PrimaryDark = Color(0xFF0D47A1)
-val AccentTeal = Color(0xFF00897B)
+val TertiaryAmber = Color(0xFF6D4C41)
+val TertiaryContainer = Color(0xFFFFECB3)
+val OnTertiary = Color(0xFFFFFFFF)
+val OnTertiaryContainer = Color(0xFF1F1200)
+
 val SuccessGreen = Color(0xFF43A047)
-val ErrorRed = Color(0xFFE53935)
-val WarningOrange = Color(0xFFFB8C00)
-val BackgroundLight = Color(0xFFF5F5F5)
-val CardWhite = Color(0xFFFFFFFF)
-val TextPrimary = Color(0xFF212121)
-val TextSecondary = Color(0xFF757575)
+val ErrorRed = Color(0xFFB3261E)
+val ErrorContainer = Color(0xFFF9DEDC)
+val OnError = Color(0xFFFFFFFF)
+val OnErrorContainer = Color(0xFF410E0B)
+
+val SurfaceLight = Color(0xFFF8F9FA)
+val SurfaceVariant = Color(0xFFE8F5E9)
+val OnSurface = Color(0xFF1C1B1F)
+val OnSurfaceVariant = Color(0xFF43483F)
+
+val BackgroundLight = Color(0xFFF8F9FA)
+val OnBackground = Color(0xFF1C1B1F)
+
+val Outline = Color(0xFF747775)
+val OutlineVariant = Color(0xFFC1C9BE)
 val White = Color(0xFFFFFFFF)

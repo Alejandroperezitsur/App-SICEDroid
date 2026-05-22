@@ -1,0 +1,40 @@
+CREATE TABLE ProfileEntity (
+    matricula TEXT NOT NULL PRIMARY KEY,
+    nombre TEXT NOT NULL DEFAULT '',
+    apellidos TEXT NOT NULL DEFAULT '',
+    carrera TEXT NOT NULL DEFAULT '',
+    especialidad TEXT NOT NULL DEFAULT '',
+    semestre INTEGER AS Int NOT NULL DEFAULT 0,
+    promedio TEXT NOT NULL DEFAULT '',
+    estado TEXT NOT NULL DEFAULT '',
+    status_matricula TEXT NOT NULL DEFAULT '',
+    cdts_reunidos INTEGER AS Int NOT NULL DEFAULT 0,
+    cdts_actuales INTEGER AS Int NOT NULL DEFAULT 0,
+    sem_actual INTEGER AS Int NOT NULL DEFAULT 0,
+    inscrito TEXT NOT NULL DEFAULT '',
+    reinscripcion_fecha TEXT NOT NULL DEFAULT '',
+    estatus_alumno TEXT NOT NULL DEFAULT '',
+    estatus_academico TEXT NOT NULL DEFAULT '',
+    foto_url TEXT NOT NULL DEFAULT '',
+    sin_adeudos TEXT NOT NULL DEFAULT '',
+    lineamiento INTEGER AS Int NOT NULL DEFAULT 1,
+    mod_educativo INTEGER AS Int NOT NULL DEFAULT 1,
+    operaciones TEXT NOT NULL DEFAULT '[]',
+    last_update INTEGER NOT NULL DEFAULT 0
+);
+
+getProfile:
+SELECT * FROM ProfileEntity WHERE matricula = ?;
+
+insertProfile:
+INSERT OR REPLACE INTO ProfileEntity(
+    matricula, nombre, apellidos, carrera, especialidad,
+    semestre, promedio, estado, status_matricula,
+    cdts_reunidos, cdts_actuales, sem_actual, inscrito,
+    reinscripcion_fecha, estatus_alumno, estatus_academico,
+    foto_url, sin_adeudos, lineamiento, mod_educativo,
+    operaciones, last_update
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+deleteProfile:
+DELETE FROM ProfileEntity WHERE matricula = ?;

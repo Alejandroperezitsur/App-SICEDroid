@@ -1,25 +1,41 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SICEDroid</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SICEDroid - Web</title>
     <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
         body, html {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
+            background: #1B5E20;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         #ComposeTarget {
             width: 100%;
             height: 100%;
+            max-width: 480px;
+            display: block;
         }
     </style>
 </head>
 <body>
     <canvas id="ComposeTarget"></canvas>
     <script src="composeApp.js"></script>
+    <script>
+        // CORS Proxy note:
+        // Este endpoint requiere CORS en navegador.
+        // Para desarrollo, usa un proxy como:
+        //   node -e "const h=require('http');h.createServer((r,s)=>{r.pipe(h.request({host:'sicenet.itsur.edu.mx',port:443,path:r.url,method:r.method,headers:{...r.headers,host:'sicenet.itsur.edu.mx'}},a=>{s.writeHead(a.statusCode,a.headers);a.pipe(s)})).end()}).listen(3000)"
+        // Luego cambia baseUrl en SiceApiService.kt a "http://localhost:3000"
+    </script>
 </body>
 </html>

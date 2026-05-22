@@ -1,0 +1,28 @@
+CREATE TABLE CargaEntity (
+    matricula TEXT NOT NULL,
+    nombre TEXT NOT NULL,
+    docente TEXT NOT NULL DEFAULT '',
+    grupo TEXT NOT NULL DEFAULT '',
+    creditos INTEGER AS Int NOT NULL DEFAULT 0,
+    lunes TEXT NOT NULL DEFAULT '',
+    martes TEXT NOT NULL DEFAULT '',
+    miercoles TEXT NOT NULL DEFAULT '',
+    jueves TEXT NOT NULL DEFAULT '',
+    viernes TEXT NOT NULL DEFAULT '',
+    sabado TEXT NOT NULL DEFAULT '',
+    last_update INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (matricula, nombre, grupo)
+);
+
+getCarga:
+SELECT * FROM CargaEntity WHERE matricula = ?;
+
+insertCarga:
+INSERT OR REPLACE INTO CargaEntity(
+    matricula, nombre, docente, grupo, creditos,
+    lunes, martes, miercoles, jueves, viernes, sabado,
+    last_update
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+deleteCarga:
+DELETE FROM CargaEntity WHERE matricula = ?;

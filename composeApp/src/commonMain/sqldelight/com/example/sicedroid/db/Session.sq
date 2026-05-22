@@ -1,0 +1,19 @@
+CREATE TABLE SessionEntity (
+    matricula TEXT NOT NULL PRIMARY KEY,
+    password TEXT NOT NULL,
+    is_logged_in INTEGER AS Boolean NOT NULL DEFAULT 0,
+    last_login INTEGER NOT NULL DEFAULT 0
+);
+
+getSession:
+SELECT * FROM SessionEntity WHERE is_logged_in = 1;
+
+sessionExists:
+SELECT COUNT(*) FROM SessionEntity WHERE is_logged_in = 1;
+
+saveSession:
+INSERT OR REPLACE INTO SessionEntity(matricula, password, is_logged_in, last_login)
+VALUES (?, ?, 1, ?);
+
+clearSession:
+DELETE FROM SessionEntity;
