@@ -2,7 +2,7 @@ CREATE TABLE KardexEntity (
     matricula TEXT NOT NULL,
     clave TEXT NOT NULL,
     nombre TEXT NOT NULL DEFAULT '',
-    calificacion INTEGER AS Int NOT NULL DEFAULT 0,
+    calificacion INTEGER NOT NULL DEFAULT 0,
     acreditacion TEXT NOT NULL DEFAULT '',
     periodo TEXT NOT NULL DEFAULT '',
     last_update INTEGER NOT NULL DEFAULT 0,
