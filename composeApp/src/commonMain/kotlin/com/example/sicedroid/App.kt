@@ -21,24 +21,44 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.sicedroid.db.LocalDataSource
 import com.example.sicedroid.network.SiceApiService
 import com.example.sicedroid.network.SNRepository
 import com.example.sicedroid.model.*
 import com.example.sicedroid.ui.*
+import com.example.sicedroid.viewmodel.AcademicDataState
+import com.example.sicedroid.viewmodel.LoginUiState
+import com.example.sicedroid.viewmodel.SicedroidViewModel
 
 private val SicenetGreen = Color(0xFF1B5E20)
 private val SicenetGreenLight = Color(0xFFC8E6C9)
 
 expect fun currentTimeMillis(): Long
 
+//SE DEFINEN LAS PANTALLAS
 enum class Screen {
     LOGIN, PROFILE, ACADEMIC_HOME, KARDEX, CARGA, CALIFICACIONES
 }
 
 @Composable
 fun App(localDataSource: LocalDataSource) {
+    val apiService = remember { SiceApiService() }
+    val repository = remember { SNRepository(apiService) }
+    val viewModel: SicedroidViewModel = viewModel { SicedroidViewModel(repository, localDataSource) }
+
+    val currentScreen by viewModel.currentScreen.collectAsState()
+    val loginState by viewModel.loginState.collectAsState()
+    val matricula by viewModel.matricula.collectAsState()
+    val password by viewModel.password.collectAsState()
+    val profileData by viewModel.profileData.collectAsState()
+    val lastUpdate by viewModel.lastUpdate.collectAsState()
+    val kardexData by viewModel.kardexData.collectAsState()
+    val cargaData by viewModel.cargaData.collectAsState()
+    val parcialesData by viewModel.parcialesData.collectAsState()
+    val finalesData by viewModel.finalesData.collectAsState()
+    val academicState by viewModel.academicState.collectAsState()
+
     MaterialTheme(
         colorScheme = lightColorScheme(
             primary = SicenetGreen,
@@ -56,253 +76,138 @@ fun App(localDataSource: LocalDataSource) {
             onErrorContainer = Color(0xFF410E0B)
         )
     ) {
-        val coroutineScope = rememberCoroutineScope()
-        val apiService = remember { SiceApiService() }
-        val repository = remember { SNRepository(apiService) }
-
-        var currentScreen by remember { mutableStateOf(Screen.LOGIN) }
-        var matricula by remember { mutableStateOf("") }
-        var password by remember { mutableStateOf("") }
-        var isLoading by remember { mutableStateOf(false) }
-        var loginError by remember { mutableStateOf(false) }
-        var errorMessage by remember { mutableStateOf("") }
-        var showSuccess by remember { mutableStateOf(false) }
-        var profileData by remember { mutableStateOf<ProfileStudent?>(null) }
-        var lastUpdate by remember { mutableStateOf(0L) }
-
-        var kardexData by remember { mutableStateOf<List<MateriaKardex>>(emptyList()) }
-        var cargaData by remember { mutableStateOf<List<MateriaCarga>>(emptyList()) }
-        var parcialesData by remember { mutableStateOf<List<MateriaParcial>>(emptyList()) }
-        var finalesData by remember { mutableStateOf<List<MateriaFinal>>(emptyList()) }
-        var academicLoading by remember { mutableStateOf(false) }
-
-        var isCheckingSession by remember { mutableStateOf(true) }
-
-        val currentMatricula = matricula
-
-        LaunchedEffect(Unit) {
-            val session = localDataSource.getSession()
-            if (session != null) {
-                matricula = session.matricula
-                password = session.password
-                isLoading = true
-                val success = repository.acceso(session.matricula, session.password)
-                if (success) {
-                    showSuccess = true
-                    lastUpdate = currentTimeMillis()
-                    localDataSource.saveSession(session.matricula, session.password)
-                    val profile = repository.profile(session.matricula)
-                    profileData = profile
-                    localDataSource.saveProfile(session.matricula, profile)
-                    isLoading = false
-                    currentScreen = Screen.PROFILE
-                } else {
-                    localDataSource.clearSession()
-                    matricula = ""
-                    password = ""
-                    isLoading = false
-                }
-            }
-            isCheckingSession = false
-        }
-
-        fun resetLogin() {
-            localDataSource.clearSession()
-            localDataSource.clearAll(currentMatricula)
-            currentScreen = Screen.LOGIN
-            showSuccess = false
-            matricula = ""
-            password = ""
-            profileData = null
-            loginError = false
-            errorMessage = ""
-            lastUpdate = 0L
-            kardexData = emptyList()
-            cargaData = emptyList()
-            parcialesData = emptyList()
-            finalesData = emptyList()
-        }
-
-        fun doLogin() {
-            if (matricula.isNotBlank() && password.isNotBlank()) {
-                isLoading = true
-                loginError = false
-                errorMessage = ""
-                coroutineScope.launch {
-                    val success = repository.acceso(matricula, password)
-                    if (success) {
-                        showSuccess = true
-                        lastUpdate = currentTimeMillis()
-                        localDataSource.saveSession(matricula, password)
-                        val profile = repository.profile(matricula)
-                        profileData = profile
-                        localDataSource.saveProfile(matricula, profile)
-                        isLoading = false
-                        currentScreen = Screen.PROFILE
-                    } else {
-                        isLoading = false
-                        loginError = true
-                        errorMessage = "Credenciales inválidas. Verifica tu matrícula y contraseña."
+        when (loginState) {
+            is LoginUiState.CheckingSession -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(48.dp),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            "Cargando sesión...",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             }
-        }
+            //UI REACCIONA AL ESTADO
+            else -> when (currentScreen) {
+                Screen.LOGIN -> {
+                    val isLoading = loginState is LoginUiState.Loading
+                    val loginError = loginState is LoginUiState.Error
+                    val errorMessage = (loginState as? LoginUiState.Error)?.message ?: ""
+                    var passwordVisible by remember { mutableStateOf(false) }
 
-        fun loadAcademicData() {
-            kardexData = localDataSource.getKardex(currentMatricula)
-            cargaData = localDataSource.getCarga(currentMatricula)
-            parcialesData = localDataSource.getCalifUnidad(currentMatricula)
-            finalesData = localDataSource.getCalifFinal(currentMatricula)
-
-            academicLoading = true
-            coroutineScope.launch {
-                try {
-                    val k = repository.getKardex(currentMatricula)
-                    val c = repository.getCarga(currentMatricula)
-                    val p = repository.getCalifUnidades(currentMatricula)
-                    val f = repository.getCalifFinal(currentMatricula)
-                    kardexData = k
-                    cargaData = c
-                    parcialesData = p
-                    finalesData = f
-                    localDataSource.saveKardex(currentMatricula, k)
-                    localDataSource.saveCarga(currentMatricula, c)
-                    localDataSource.saveCalifUnidad(currentMatricula, p)
-                    localDataSource.saveCalifFinal(currentMatricula, f)
-                } catch (_: Exception) { }
-                academicLoading = false
-            }
-        }
-
-        if (isCheckingSession) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(48.dp),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        "Cargando sesión...",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        } else when (currentScreen) {
-            Screen.LOGIN -> {
-                var passwordVisible by remember { mutableStateOf(false) }
-
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    AnimatedContent(
-                        targetState = isLoading,
-                        transitionSpec = {
-                            fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
-                        },
-                        label = "login_loading"
-                    ) { loading ->
-                        if (loading) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Card(
-                                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                                    shape = RoundedCornerShape(16.dp),
-                                    modifier = Modifier.padding(32.dp)
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        AnimatedContent(
+                            targetState = isLoading,
+                            transitionSpec = {
+                                fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
+                            },
+                            label = "login_loading"
+                        ) { loading ->
+                            if (loading) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Column(
-                                        modifier = Modifier.padding(40.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                                    Card(
+                                        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                                        shape = RoundedCornerShape(16.dp),
+                                        modifier = Modifier.padding(32.dp)
                                     ) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(56.dp),
-                                            color = MaterialTheme.colorScheme.primary,
-                                            strokeWidth = 4.dp
-                                        )
-                                        Text(
-                                            "Iniciando sesión...",
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
+                                        Column(
+                                            modifier = Modifier.padding(40.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                                        ) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(56.dp),
+                                                color = MaterialTheme.colorScheme.primary,
+                                                strokeWidth = 4.dp
+                                            )
+                                            Text(
+                                                "Iniciando sesión...",
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
                                     }
                                 }
+                            } else {
+                                LoginContent(
+                                    matricula = matricula,
+                                    password = password,
+                                    passwordVisible = passwordVisible,
+                                    loginError = loginError,
+                                    errorMessage = errorMessage,
+                                    onMatriculaChange = { viewModel.updateMatricula(it) },
+                                    onPasswordChange = { viewModel.updatePassword(it) },
+                                    onPasswordVisibleToggle = { passwordVisible = !passwordVisible },
+                                    onLogin = { viewModel.login() },
+                                    onClear = { viewModel.clearLoginError() }
+                                )
                             }
-                        } else {
-                            LoginContent(
-                                matricula = matricula,
-                                password = password,
-                                passwordVisible = passwordVisible,
-                                loginError = loginError,
-                                errorMessage = errorMessage,
-                                onMatriculaChange = { matricula = it },
-                                onPasswordChange = { password = it },
-                                onPasswordVisibleToggle = { passwordVisible = !passwordVisible },
-                                onLogin = { doLogin() },
-                                onClear = {
-                                    loginError = false
-                                    errorMessage = ""
-                                    matricula = ""
-                                    password = ""
-                                }
-                            )
                         }
                     }
                 }
-            }
 
-            Screen.PROFILE -> {
-                ProfileScreen(
-                    profile = profileData,
-                    lastUpdate = lastUpdate,
-                    onLogout = { resetLogin() },
-                    onAcademicHome = {
-                        loadAcademicData()
-                        currentScreen = Screen.ACADEMIC_HOME
-                    }
-                )
-            }
+                Screen.PROFILE -> {
+                    ProfileScreen(
+                        profile = profileData,
+                        lastUpdate = lastUpdate,
+                        onLogout = { viewModel.logout() },
+                        onAcademicHome = {
+                            viewModel.loadAcademicData()
+                            viewModel.navigateTo(Screen.ACADEMIC_HOME)
+                        }
+                    )
+                }
 
-            Screen.ACADEMIC_HOME -> {
-                AcademicHomeScreen(
-                    isLoading = academicLoading,
-                    onKardexClick = { currentScreen = Screen.KARDEX },
-                    onCargaClick = { currentScreen = Screen.CARGA },
-                    onCalificacionesClick = { currentScreen = Screen.CALIFICACIONES },
-                    onBack = { currentScreen = Screen.PROFILE }
-                )
-            }
+                Screen.ACADEMIC_HOME -> {
+                    val academicLoading = academicState is AcademicDataState.Loading
+                    AcademicHomeScreen(
+                        isLoading = academicLoading,
+                        onKardexClick = { viewModel.navigateTo(Screen.KARDEX) },
+                        onCargaClick = { viewModel.navigateTo(Screen.CARGA) },
+                        onCalificacionesClick = { viewModel.navigateTo(Screen.CALIFICACIONES) },
+                        onBack = { viewModel.navigateTo(Screen.PROFILE) }
+                    )
+                }
 
-            Screen.KARDEX -> {
-                KardexScreen(
-                    materias = kardexData,
-                    isLoading = false,
-                    onBack = { currentScreen = Screen.ACADEMIC_HOME }
-                )
-            }
+                Screen.KARDEX -> {
+                    KardexScreen(
+                        materias = kardexData,
+                        isLoading = false,
+                        onBack = { viewModel.navigateTo(Screen.ACADEMIC_HOME) }
+                    )
+                }
 
-            Screen.CARGA -> {
-                CargaScreen(
-                    materias = cargaData,
-                    isLoading = false,
-                    onBack = { currentScreen = Screen.ACADEMIC_HOME }
-                )
-            }
+                Screen.CARGA -> {
+                    CargaScreen(
+                        materias = cargaData,
+                        isLoading = false,
+                        onBack = { viewModel.navigateTo(Screen.ACADEMIC_HOME) }
+                    )
+                }
 
-            Screen.CALIFICACIONES -> {
-                CalificacionesScreen(
-                    parciales = parcialesData,
-                    finales = finalesData,
-                    isLoading = false,
-                    onBack = { currentScreen = Screen.ACADEMIC_HOME }
-                )
+                Screen.CALIFICACIONES -> {
+                    CalificacionesScreen(
+                        parciales = parcialesData,
+                        finales = finalesData,
+                        isLoading = false,
+                        onBack = { viewModel.navigateTo(Screen.ACADEMIC_HOME) }
+                    )
+                }
             }
         }
     }

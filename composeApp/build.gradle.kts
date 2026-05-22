@@ -130,6 +130,23 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    signingConfigs {
+        create("release") {
+            storeFile = file("sicedroid.jks")
+            storePassword = "android"
+            keyAlias = "SICEDroid"
+            keyPassword = "android"
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
+
     dependencies {
         debugImplementation("androidx.compose.ui:ui-tooling:1.5.0")
     }
