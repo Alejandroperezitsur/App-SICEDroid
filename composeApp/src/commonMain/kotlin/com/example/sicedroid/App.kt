@@ -59,6 +59,8 @@ fun App(localDataSource: LocalDataSource) {
     val finalesData by viewModel.finalesData.collectAsState()
     val academicState by viewModel.academicState.collectAsState()
 
+    HandleSystemBack(enabled = currentScreen != Screen.LOGIN, onBack = { viewModel.goBack() })
+
     MaterialTheme(
         colorScheme = lightColorScheme(
             primary = SicenetGreen,
@@ -175,37 +177,45 @@ fun App(localDataSource: LocalDataSource) {
 
                 Screen.ACADEMIC_HOME -> {
                     val academicLoading = academicState is AcademicDataState.Loading
+                    val isOffline = (academicState as? AcademicDataState.Success)?.isOffline ?: false
                     AcademicHomeScreen(
                         isLoading = academicLoading,
+                        isOffline = isOffline,
                         onKardexClick = { viewModel.navigateTo(Screen.KARDEX) },
                         onCargaClick = { viewModel.navigateTo(Screen.CARGA) },
                         onCalificacionesClick = { viewModel.navigateTo(Screen.CALIFICACIONES) },
-                        onBack = { viewModel.navigateTo(Screen.PROFILE) }
+                        onBack = { viewModel.goBack() }
                     )
                 }
 
                 Screen.KARDEX -> {
+                    val isOffline = (academicState as? AcademicDataState.Success)?.isOffline ?: false
                     KardexScreen(
                         materias = kardexData,
                         isLoading = false,
-                        onBack = { viewModel.navigateTo(Screen.ACADEMIC_HOME) }
+                        isOffline = isOffline,
+                        onBack = { viewModel.goBack() }
                     )
                 }
 
                 Screen.CARGA -> {
+                    val isOffline = (academicState as? AcademicDataState.Success)?.isOffline ?: false
                     CargaScreen(
                         materias = cargaData,
                         isLoading = false,
-                        onBack = { viewModel.navigateTo(Screen.ACADEMIC_HOME) }
+                        isOffline = isOffline,
+                        onBack = { viewModel.goBack() }
                     )
                 }
 
                 Screen.CALIFICACIONES -> {
+                    val isOffline = (academicState as? AcademicDataState.Success)?.isOffline ?: false
                     CalificacionesScreen(
                         parciales = parcialesData,
                         finales = finalesData,
                         isLoading = false,
-                        onBack = { viewModel.navigateTo(Screen.ACADEMIC_HOME) }
+                        isOffline = isOffline,
+                        onBack = { viewModel.goBack() }
                     )
                 }
             }

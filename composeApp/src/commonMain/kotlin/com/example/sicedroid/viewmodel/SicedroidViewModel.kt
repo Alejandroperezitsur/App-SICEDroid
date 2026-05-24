@@ -11,6 +11,7 @@ import com.example.sicedroid.model.MateriaKardex
 import com.example.sicedroid.model.MateriaParcial
 import com.example.sicedroid.model.ProfileStudent
 import com.example.sicedroid.network.SNRepository
+import com.example.sicedroid.notifications.platformSendGradeNotification
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,7 +28,7 @@ sealed interface LoginUiState {
 sealed interface AcademicDataState {
     data object Idle : AcademicDataState
     data object Loading : AcademicDataState
-    data object Success : AcademicDataState
+    data class Success(val isOffline: Boolean = false) : AcademicDataState
     data class Error(val message: String) : AcademicDataState
 }
 
@@ -36,7 +37,8 @@ class SicedroidViewModel(
     private val localDataSource: LocalDataSource
 ) : ViewModel() {
 
-    //NAVEGACIÓN ENTRE PANTALLAS CON STATEFLOW
+    //NAVEGACIÓN CON BACK STACK MANUAL
+    private val _screenStack = mutableListOf(Screen.LOGIN)
     private val _currentScreen = MutableStateFlow(Screen.LOGIN)
     val currentScreen: StateFlow<Screen> = _currentScreen.asStateFlow()
 
@@ -89,7 +91,7 @@ class SicedroidViewModel(
                     _profileData.value = profile
                     _lastUpdate.value = currentTimeMillis()
                     _loginState.value = LoginUiState.Success
-                    _currentScreen.value = Screen.PROFILE
+                    navigateAndClearStack(Screen.PROFILE)
                 } else {
                     localDataSource.clearSession()
                     _loginState.value = LoginUiState.Idle
@@ -117,7 +119,7 @@ class SicedroidViewModel(
                     _profileData.value = profile
                     _lastUpdate.value = currentTimeMillis()
                     _loginState.value = LoginUiState.Success
-                    _currentScreen.value = Screen.PROFILE
+                    navigateAndClearStack(Screen.PROFILE)
                 } else {
                     _loginState.value = LoginUiState.Error("Credenciales inválidas. Verifica tu matrícula y contraseña.")
                 }
@@ -131,37 +133,106 @@ class SicedroidViewModel(
         _password.value = ""
     }
 
-    fun navigateTo(screen: Screen) { _currentScreen.value = screen }
+    fun navigateTo(screen: Screen) {
+        _screenStack.add(screen)
+        _currentScreen.value = screen
+    }
+
+    fun goBack() {
+        if (_screenStack.size > 1) {
+            _screenStack.removeLast()
+            _currentScreen.value = _screenStack.last()
+        }
+    }
+
+    private fun navigateAndClearStack(screen: Screen) {
+        _screenStack.clear()
+        _screenStack.add(screen)
+        _currentScreen.value = screen
+    }
 
     fun loadAcademicData() {
         val m = _matricula.value
+        val oldParciales = localDataSource.getCalifUnidad(m)
+        val oldFinales = localDataSource.getCalifFinal(m)
         _kardexData.value = localDataSource.getKardex(m)
         _cargaData.value = localDataSource.getCarga(m)
-        _parcialesData.value = localDataSource.getCalifUnidad(m)
-        _finalesData.value = localDataSource.getCalifFinal(m)
+        _parcialesData.value = oldParciales
+        _finalesData.value = oldFinales
 
         _academicState.value = AcademicDataState.Loading
         viewModelScope.launch {
             try {
+                val newParciales = repository.getCalifUnidades(m)
+                val newFinales = repository.getCalifFinal(m)
+
+                checkGradeChanges(oldParciales, newParciales, oldFinales, newFinales)
+
                 _kardexData.value = repository.getKardex(m)
                 _cargaData.value = repository.getCarga(m)
-                _parcialesData.value = repository.getCalifUnidades(m)
-                _finalesData.value = repository.getCalifFinal(m)
+                _parcialesData.value = newParciales
+                _finalesData.value = newFinales
                 localDataSource.saveKardex(m, _kardexData.value)
                 localDataSource.saveCarga(m, _cargaData.value)
-                localDataSource.saveCalifUnidad(m, _parcialesData.value)
-                localDataSource.saveCalifFinal(m, _finalesData.value)
-                _academicState.value = AcademicDataState.Success
+                localDataSource.saveCalifUnidad(m, newParciales)
+                localDataSource.saveCalifFinal(m, newFinales)
+                _academicState.value = AcademicDataState.Success()
             } catch (_: Exception) {
-                _academicState.value = AcademicDataState.Success
+                _academicState.value = AcademicDataState.Success(isOffline = true)
             }
         }
+    }
+
+    private fun checkGradeChanges(
+        oldParciales: List<MateriaParcial>,
+        newParciales: List<MateriaParcial>,
+        oldFinales: List<MateriaFinal>,
+        newFinales: List<MateriaFinal>
+    ) {
+        var changes = 0
+        newParciales.forEach { newM ->
+            val oldM = oldParciales.find { it.materia == newM.materia }
+            newM.parciales.forEachIndexed { i, newGrade ->
+                val oldGrade = oldM?.parciales?.getOrNull(i) ?: ""
+                if (hasNewGrade(oldGrade, newGrade)) {
+                    platformSendGradeNotification(
+                        "Nueva calificación",
+                        "${newM.materia} - Unidad ${i + 1}: $newGrade"
+                    )
+                    changes++
+                }
+            }
+        }
+        newFinales.forEach { newF ->
+            val oldF = oldFinales.find { it.materia == newF.materia }
+            val oldCalif = oldF?.calif?.toString() ?: ""
+            if (hasNewGrade(oldCalif, newF.calif.toString())) {
+                platformSendGradeNotification(
+                    "Nueva calificación final",
+                    "${newF.materia}: ${newF.calif}"
+                )
+                changes++
+            }
+        }
+        if (changes > 1) {
+            platformSendGradeNotification(
+                "Calificaciones actualizadas",
+                "Se actualizaron $changes calificaciones"
+            )
+        }
+    }
+
+    private fun hasNewGrade(oldGrade: String, newGrade: String): Boolean {
+        if (oldGrade.isNullOrEmpty() || oldGrade == "0" || oldGrade == "-") {
+            return newGrade.isNotEmpty() && newGrade != "0" && newGrade != "-"
+        }
+        return false
     }
 
     fun logout() {
         localDataSource.clearSession()
         localDataSource.clearAll(_matricula.value)
-        _currentScreen.value = Screen.LOGIN
+        navigateAndClearStack(Screen.LOGIN)
         _matricula.value = ""
         _password.value = ""
         _profileData.value = null

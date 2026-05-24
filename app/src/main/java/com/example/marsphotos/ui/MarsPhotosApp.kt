@@ -33,16 +33,18 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.marsphotos.MarsPhotosApplication
-import com.example.marsphotos.data.SessionManager
+import com.example.marsphotos.R
 import com.example.marsphotos.ui.screens.AcademicViewModel
 import com.example.marsphotos.ui.screens.CargaScreen
 import com.example.marsphotos.ui.screens.GradesScreen
@@ -52,34 +54,36 @@ import com.example.marsphotos.ui.screens.LoginViewModel
 import com.example.marsphotos.ui.screens.ProfileScreen
 import com.example.marsphotos.ui.screens.ProfileViewModel
 
-/**
- * Aplicación principal con navegación entre Login y Profile
- * Ahora con persistencia de sesión - si hay sesión guardada, va directo al perfil
- */
+object Routes {
+    const val LOGIN = "login"
+    const val PROFILE = "profile"
+    const val KARDEX = "kardex"
+    const val CARGA = "carga"
+    const val GRADES = "grades"
+}
+
 @Composable
 fun MarsPhotosApp() {
     val context = LocalContext.current
     val sessionManager = remember { (context.applicationContext as MarsPhotosApplication).container.sessionManager }
-    
-    // Verificar si hay sesión guardada al inicio
     val hasSavedSession = remember { sessionManager.isLoggedIn() }
     val savedMatricula = remember { sessionManager.getMatricula() }
-    
-    // Estado para controlar la navegación
-    var currentScreen by remember { mutableStateOf(if (hasSavedSession) AppScreen.PROFILE else AppScreen.LOGIN) }
-    var userMatricula by remember { mutableStateOf(if (hasSavedSession) savedMatricula else "") }
+
+    val navController = rememberNavController()
 
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        when (currentScreen) {
-            AppScreen.LOGIN -> {
+        NavHost(
+            navController = navController,
+            startDestination = if (hasSavedSession) Routes.PROFILE else Routes.LOGIN
+        ) {
+            composable(Routes.LOGIN) {
                 val loginViewModel: LoginViewModel = viewModel(factory = LoginViewModel.Factory)
-                
-                // Si hay sesión guardada, actualizar el ViewModel con las credenciales
-                LaunchedEffect(Unit) {
-                    if (hasSavedSession) {
+
+                if (hasSavedSession) {
+                    LaunchedEffect(Unit) {
                         val credentials = sessionManager.getCredentials()
                         credentials?.let { (mat, pass) ->
                             loginViewModel.updateMatricula(mat)
@@ -87,7 +91,7 @@ fun MarsPhotosApp() {
                         }
                     }
                 }
-                
+
                 LoginScreen(
                     loginUiState = loginViewModel.loginUiState,
                     matricula = loginViewModel.matricula,
@@ -96,51 +100,52 @@ fun MarsPhotosApp() {
                     onContraseniaChange = loginViewModel::updateContrasenia,
                     onLoginClick = loginViewModel::login,
                     onLoginSuccess = { matricula ->
-                        userMatricula = matricula
-                        currentScreen = AppScreen.PROFILE
+                        navController.navigate(Routes.PROFILE) {
+                            popUpTo(Routes.LOGIN) { inclusive = true }
+                        }
                         loginViewModel.resetState()
                     },
                     onResetForm = loginViewModel::resetForm
                 )
             }
 
-            AppScreen.PROFILE -> {
+            composable(Routes.PROFILE) {
                 val profileViewModel: ProfileViewModel = viewModel(factory = ProfileViewModel.Factory)
-                
-                // Cargar perfil cuando se abre la pantalla
-                LaunchedEffect(userMatricula) {
-                    if (userMatricula.isNotEmpty()) {
-                        profileViewModel.loadProfile(userMatricula)
+
+                LaunchedEffect(Unit) {
+                    val matricula = sessionManager.getMatricula()
+                    if (matricula.isNotEmpty()) {
+                        profileViewModel.loadProfile(matricula)
                     }
                 }
-                
+
                 ProfileScreen(
                     profileUiState = profileViewModel.profileUiState,
                     onLogoutClick = {
-                        // Cerrar sesión y limpiar datos
                         sessionManager.clearSession()
-                        currentScreen = AppScreen.LOGIN
-                        userMatricula = ""
+                        navController.navigate(Routes.LOGIN) {
+                            popUpTo(0) { inclusive = true }
+                        }
                     },
-                    onKardexClick = { currentScreen = AppScreen.KARDEX },
-                    onCargaClick = { currentScreen = AppScreen.CARGA },
-                    onGradesClick = { currentScreen = AppScreen.GRADES }
+                    onKardexClick = { navController.navigate(Routes.KARDEX) },
+                    onCargaClick = { navController.navigate(Routes.CARGA) },
+                    onGradesClick = { navController.navigate(Routes.GRADES) }
                 )
             }
 
-            AppScreen.KARDEX -> {
+            composable(Routes.KARDEX) {
                 val academicViewModel: AcademicViewModel = viewModel(factory = AcademicViewModel.Factory)
                 Scaffold(
                     topBar = {
                         TopAppBar(
-                            title = { 
+                            title = {
                                 Text(
-                                    text = androidx.compose.ui.res.stringResource(id = com.example.marsphotos.R.string.kardex_title),
+                                    text = stringResource(id = R.string.kardex_title),
                                     color = MaterialTheme.colorScheme.onPrimary
-                                ) 
+                                )
                             },
                             navigationIcon = {
-                                IconButton(onClick = { currentScreen = AppScreen.PROFILE }) {
+                                IconButton(onClick = { navController.popBackStack() }) {
                                     Icon(
                                         imageVector = Icons.Filled.ArrowBack,
                                         contentDescription = null,
@@ -161,19 +166,19 @@ fun MarsPhotosApp() {
                 }
             }
 
-            AppScreen.CARGA -> {
+            composable(Routes.CARGA) {
                 val academicViewModel: AcademicViewModel = viewModel(factory = AcademicViewModel.Factory)
                 Scaffold(
                     topBar = {
                         TopAppBar(
-                            title = { 
+                            title = {
                                 Text(
-                                    text = androidx.compose.ui.res.stringResource(id = com.example.marsphotos.R.string.carga_title),
+                                    text = stringResource(id = R.string.carga_title),
                                     color = MaterialTheme.colorScheme.onPrimary
-                                ) 
+                                )
                             },
                             navigationIcon = {
-                                IconButton(onClick = { currentScreen = AppScreen.PROFILE }) {
+                                IconButton(onClick = { navController.popBackStack() }) {
                                     Icon(
                                         imageVector = Icons.Filled.ArrowBack,
                                         contentDescription = null,
@@ -194,19 +199,19 @@ fun MarsPhotosApp() {
                 }
             }
 
-            AppScreen.GRADES -> {
+            composable(Routes.GRADES) {
                 val academicViewModel: AcademicViewModel = viewModel(factory = AcademicViewModel.Factory)
                 Scaffold(
                     topBar = {
                         TopAppBar(
-                            title = { 
+                            title = {
                                 Text(
-                                    text = androidx.compose.ui.res.stringResource(id = com.example.marsphotos.R.string.grades_title),
+                                    text = stringResource(id = R.string.grades_title),
                                     color = MaterialTheme.colorScheme.onPrimary
-                                ) 
+                                )
                             },
                             navigationIcon = {
-                                IconButton(onClick = { currentScreen = AppScreen.PROFILE }) {
+                                IconButton(onClick = { navController.popBackStack() }) {
                                     Icon(
                                         imageVector = Icons.Filled.ArrowBack,
                                         contentDescription = null,
@@ -228,15 +233,4 @@ fun MarsPhotosApp() {
             }
         }
     }
-}
-
-/**
- * Enum para controlar las pantallas de la aplicación
- */
-enum class AppScreen {
-    LOGIN,
-    PROFILE,
-    KARDEX,
-    CARGA,
-    GRADES
 }

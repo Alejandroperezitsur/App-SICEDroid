@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun AcademicHomeScreen(
     isLoading: Boolean,
+    isOffline: Boolean = false,
     onKardexClick: () -> Unit,
     onCargaClick: () -> Unit,
     onCalificacionesClick: () -> Unit,
@@ -51,6 +52,23 @@ fun AcademicHomeScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.height(8.dp))
+                if (isOffline) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        color = MaterialTheme.colorScheme.tertiaryContainer,
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(Icons.Filled.WifiOff, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onTertiaryContainer)
+                            Spacer(modifier = Modifier.padding(end = 6.dp))
+                            Text("Modo offline - Datos almacenados", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
+                        }
+                    }
+                }
                 Text(
                     text = "Selecciona una operación",
                     style = MaterialTheme.typography.titleLarge,
